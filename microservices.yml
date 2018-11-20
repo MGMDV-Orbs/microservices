@@ -1,0 +1,169 @@
+version: 2.1
+
+orbs:
+  vpn: mgmresorts/vpn@0.7.0
+
+commands:
+  print-diagnostics:
+    description: Prints diagnostic information about current build environment
+    steps:
+      - run:
+          name: Diagnostics
+          command: |
+            echo NodeJS: `node -v`
+            echo NPM: `npm -v`
+            echo AWS CLI: `aws --version`
+            echo Docker: `docker -v`
+            echo Access Key: $AWS_ACCESS_KEY_ID
+            echo Git Branch/Commit: $CIRCLE_BRANCH/$CIRCLE_SHA1
+
+  fetch-environment-variables-from-s3:
+    description: Fetches environment variables for ${service-name}/${branch-name}.json
+    steps:
+      - run:
+          name: Fetch JSON from S3 bucket and place in ./environment/config.json worskapce
+          command: |
+            mkdir environment
+            echo Using build env var until S3 bucket is created
+            aws s3 cp "s3://mgmresorts-services-configurations/$CIRCLE_PROJECT_REPONAME/$CIRCLE_BRANCH.json" ./environment/config.json
+      - persist_to_workspace:
+          root: .
+          paths:
+            - environment
+
+  populate-env-vars-into-job:
+    description: Populates the environment from JSON file in S3
+    steps:
+      - attach_workspace:
+          at: build-workspace
+      - run:
+          name: Populate environment variables from config
+          command: |
+            for s in $(cat build-workspace/environment/config.json | jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]" ); do
+              echo "export $s" >> $BASH_ENV
+            done
+      - run:
+          name: Set Full Image Name
+          command: |
+            echo 'export FULL_IMAGE_NAME="${ECR_APP_IMAGE}:${CIRCLE_SHA1}"' >> $BASH_ENV
+
+  # TODO: add multiple tags (branch, latest) possible pre-existing bug with overwriting images
+  build-and-tag-docker-image:
+    description: Builds the docker image and tags it with commit and branch
+    steps:
+      - run:
+          name: Build Docker Image
+          command: |
+            docker build -t $FULL_IMAGE_NAME -f Dockerfile .
+            docker tag $FULL_IMAGE_NAME $CIRCLE_BRANCH
+
+  push-built-image-to-ecr:
+    description: Pushes built image to ECR based on environment variables
+    steps:
+      - run:
+          name: Push Image to ECR
+          command: |
+            eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
+            docker push $FULL_IMAGE_NAME
+            docker push
+
+  install-npm-modules-with-cache:
+    description: Installs npm modules from circleci cache (if it exists) and saves results back to cache
+    steps:
+      - restore_cache:
+          key: rooms-npm-cache-{{ checksum "package.json" }}
+      - run:
+          name: Install NPM dependencies
+          command: |
+            npm install
+      - save_cache:
+          key: rooms-npm-cache-{{ checksum "package.json" }}
+          paths:
+            - ./node_modules
+
+  run-docker-compose-tests:
+    description: Runs docker compose up tests with proper exit code verification to fail build
+    steps:
+      - run:
+          name: Run docker compose up test with exit code flag
+          command: |
+            echo "Temporarily disabled due to QA downtime"
+            # docker-compose up --exit-code-from test test
+
+  populate-secret-ssm-env-vars:
+    description:
+    steps:
+      - run:
+          name: Populates secrets environment variables from SSM based on SSM_PATH_PREFIX in environment variables
+          command: |
+            echo 'export SNT_CLIENT_ID=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/SNT/ClientCredentials/client_id" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
+            echo 'export SNT_CLIENT_SECRET=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/SNT/ClientCredentials/client_secret" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
+            echo 'export OKTA_TOKEN=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/okta/token" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
+            echo 'export AWS_GW_API_KEY=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Gateway/apikey" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
+
+  generate-task-definition-from-template:
+    description: Generate ECS task definition by filling in environment variables.
+    steps:
+      - run:
+          name: Update ECS Task Definition
+          command: |
+            envsubst < "task-definition-mgm.json" > "parsed-task-definition-mgm.json"
+            echo Generated Task Definition
+            cat parsed-task-definition-mgm.json
+
+  publish-task-definition-to-ecr:
+    description: Publish generated task definition to ECR.
+    steps:
+      - run:
+          name: Update ECS Task Definition
+          command: |
+            aws ecs register-task-definition --cli-input-json file://parsed-task-definition-mgm.json
+
+  deploy-task-to-ecs:
+    description: Deploy latest task definition in ECR to ECS Service
+    steps:
+      - run:
+          name: Deploy New Task Definition to ECS Cluster
+          command: |
+            TASK_REVISION="$(aws ecs describe-task-definition --task-definition ${TASK_FAMILY} | egrep "revision" | tr -s ' ' | cut -d ' ' -f 3)"
+            aws ecs update-service --cluster ${CLUSTER} --service ${SERVICE} --task-definition ${TASK_FAMILY}:${TASK_REVISION} --desired-count ${DESIRED_COUNT}
+
+jobs:
+  # Step 1: Fetch environment configuration for this branch
+  # and print diagnostic info
+  initial-setup:
+    executor: vpn/aws
+    steps:
+      - print-diagnostics
+      - fetch-environment-variables-from-s3
+
+  # Step 2: Verify that tests are passing
+  run-tests:
+    executor: vpn/aws
+    steps:
+      - vpn/with-vpn-connection:
+          after-vpn-steps:
+            - checkout
+            - install-npm-modules-with-cache
+            - run-docker-compose-tests
+
+  # Step 3: Build docker image and push to ECR
+  push-image-to-ecr:
+    executor: vpn/aws
+    steps:
+      - checkout
+      - populate-env-vars-into-job
+      - build-and-tag-docker-image
+      - push-built-image-to-ecr
+
+  # Step 4: Deploys build image to ECS by registring task and updating cluster
+  update-ecs-service:
+    executor: vpn/aws
+    steps:
+      - checkout
+      - populate-env-vars-into-job
+      - populate-secret-ssm-env-vars
+      - generate-task-definition-from-template
+      - publish-task-definition-to-ecr
+      - deploy-task-to-ecs
+
