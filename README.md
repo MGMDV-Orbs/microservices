@@ -1,2 +1,92 @@
-# microservices
-An orb containing common abstracted commands and jobs for building and deploying MGM microservices
+# Orb: microservices
+An orb containing common abstracted commands and jobs for building and deploying MGM microservices.
+
+## Usage
+
+### Simple Usage with Workflows
+
+This is an example of a drop-in `config.yml` for any microservice.
+```yml
+version: 2.1
+
+orbs:
+  microservices: mgmresorts/microservices@0.1.0
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      # Step 1: Fetches env config and prints diagnostic info
+      - microservices/initial-setup:
+          context: microservices
+
+      # Step 2: Runs tests and assures they are passing
+      - microservices/run-tests:
+          requires:
+            - microservices/initial-setup
+          context: microservices
+
+      # Step 3: Builds docker image and push to ECR
+      - microservices/push-image-to-ecr:
+          context: microservices
+          requires:
+            - microservices/run-tests
+          filters:
+            branches:
+              only:
+                - f/circle-ci
+                # - develop
+                # - qa4
+                # - uat
+                # - master
+
+      # Step 4: Deploys built image to ECS by registring task and updating cluster
+      - microservices/update-ecs-service:
+          context: microservices
+          requires:
+            - microservices/push-image-to-ecr
+          filters:
+            branches:
+              only:
+                - f/circle-ci
+                # - develop
+                # - qa4
+                # - uat
+                # - master
+```
+
+### Advanced Usage with Commands
+You may also choose to call the discrete commands exposed by this orb directly within your inline jobs.
+
+All commands exposed by this Orb can be found [here](#orb-registry-url).
+
+For example, this Circle CI `config.yml` calls the `print-diagnostics` command exposed by `microservices` Orb within its own job definition
+
+```
+version: 2.1
+
+orbs:
+  microservices: mgmresorts/microservices@0.1.0
+
+jobs:
+  initial-setup:
+    executor: vpn/aws
+    steps:
+      - microservices/print-diagnostics
+      - run: echo "Custom step after ms Orb command"
+
+```
+
+## Architecture
+
+This orb:
+- depends on the [vpn orb](https://github.com/MGMDV-Orbs/vpn/).
+- exposes Jobs that can be used as drop-in with workflows (see Usage section)
+- exposes underlying discrete Steps used by these Jobs
+- requires usage of `microservices` context (see Usage section)
+
+### Commands
+Commands in this Orb are discrete, common operations across services, with clear descriptions, and are parameterized for extensibility.
+
+### Jobs
+Jobs exposed by this Orb are intended to be for drop-in usage of a subset of exposed commands.
