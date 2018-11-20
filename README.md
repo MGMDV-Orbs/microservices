@@ -5,7 +5,8 @@ An orb containing common abstracted commands and jobs for building and deploying
 
 ### Simple Usage with Workflows
 
-This is an example of a drop-in `config.yml` for any microservice.
+This is an example of a drop-in CircleCI configuration that can be placed at `.circleci/config.yml` for any microservice for out-of-the-box builds.
+
 ```yml
 version: 2.1
 
@@ -58,11 +59,11 @@ workflows:
 ### Advanced Usage with Commands
 You may also choose to call the discrete commands exposed by this orb directly within your inline jobs.
 
-All commands exposed by this Orb can be found [here](#orb-registry-url).
+All commands exposed by this Orb can be found [here](#orb-registry-url)(TODO).
 
 For example, this Circle CI `config.yml` calls the `print-diagnostics` command exposed by `microservices` Orb within its own job definition
 
-```
+```yml
 version: 2.1
 
 orbs:
