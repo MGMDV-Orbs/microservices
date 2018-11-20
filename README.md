@@ -35,11 +35,10 @@ workflows:
           filters:
             branches:
               only:
-                - f/circle-ci
-                # - develop
-                # - qa4
-                # - uat
-                # - master
+                - develop
+                - qa4
+                - uat
+                - master
 
       # Step 4: Deploys built image to ECS by registring task and updating cluster
       - microservices/update-ecs-service:
@@ -49,11 +48,10 @@ workflows:
           filters:
             branches:
               only:
-                - f/circle-ci
-                # - develop
-                # - qa4
-                # - uat
-                # - master
+                - develop
+                - qa4
+                - uat
+                - master
 ```
 
 ### Advanced Usage with Commands
