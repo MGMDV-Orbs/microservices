@@ -11,7 +11,7 @@ This is an example of a drop-in CircleCI configuration that can be placed at `.c
 version: 2.1
 
 orbs:
-  microservices: mgmresorts/microservices@0.1.0
+  microservices: mgmorbs/microservices@0.1.0
 
 workflows:
   version: 2
