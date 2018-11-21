@@ -65,7 +65,6 @@ commands:
           command: |
             eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
             docker push $FULL_IMAGE_NAME
-            docker push
 
   install-npm-modules-with-cache:
     description: Installs npm modules from circleci cache (if it exists) and saves results back to cache
