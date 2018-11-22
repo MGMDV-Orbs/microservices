@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  vpn: mgmresorts/vpn@0.7.0
+  vpn: mgmorbs/vpn@0.1.0
 
 commands:
   print-diagnostics:
