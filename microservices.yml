@@ -47,15 +47,13 @@ commands:
           command: |
             echo 'export FULL_IMAGE_NAME="${ECR_APP_IMAGE}:${CIRCLE_SHA1}"' >> $BASH_ENV
 
-  # TODO: add multiple tags (branch, latest) possible pre-existing bug with overwriting images
   build-and-tag-docker-image:
     description: Builds the docker image and tags it with commit and branch
     steps:
       - run:
           name: Build Docker Image
           command: |
-            docker build -t $FULL_IMAGE_NAME -f Dockerfile .
-            docker tag $FULL_IMAGE_NAME $CIRCLE_BRANCH
+            docker build -t $ECR_APP_IMAGE:latest -t $ECR_APP_IMAGE:CircleCI-$CIRCLE_BUILD_NUM -t $ECR_APP_IMAGE:$CIRCLE_SHA1 -f Dockerfile .
 
   push-built-image-to-ecr:
     description: Pushes built image to ECR based on environment variables
@@ -64,7 +62,9 @@ commands:
           name: Push Image to ECR
           command: |
             eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
-            docker push $FULL_IMAGE_NAME
+            docker push $ECR_APP_IMAGE:latest
+            docker push $ECR_APP_IMAGE:CircleCI__$CIRCLE_BUILD_NUM
+            docker push $ECR_APP_IMAGE:Commit__$CIRCLE_SHA1
 
   install-npm-modules-with-cache:
     description: Installs npm modules from circleci cache (if it exists) and saves results back to cache
