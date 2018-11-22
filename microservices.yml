@@ -45,9 +45,9 @@ commands:
       - run:
           name: Set Full Image Name
           command: |
-            echo 'export TAG_CI="${ECR_APP_IMAGE}:CIRCLECI__${CIRCLE_SHA1}"' >> $BASH_ENV
-            echo 'export TAG_COMMIT="${ECR_APP_IMAGE}:COMMIT__${CIRCLE_SHA1}"' >> $BASH_ENV
             echo 'export TAG_LATEST="${ECR_APP_IMAGE}:latest"' >> $BASH_ENV
+            echo 'export TAG_CI="${ECR_APP_IMAGE}:BUILD_${CIRCLE_BUILD_NUM}"' >> $BASH_ENV
+            echo 'export TAG_COMMIT="${ECR_APP_IMAGE}:COMMIT__${CIRCLE_SHA1}"' >> $BASH_ENV
 
   build-and-tag-docker-image:
     description: Builds the docker image and tags it with commit and branch
@@ -64,9 +64,9 @@ commands:
           name: Push Image to ECR
           command: |
             eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
-            docker push $TAG_LATEST
-            docker push $TAG_CI
             docker push $TAG_COMMIT
+            docker push $TAG_CI
+            docker push $TAG_LATEST
 
   install-npm-modules-with-cache:
     description: Installs npm modules from circleci cache (if it exists) and saves results back to cache
