@@ -76,6 +76,31 @@ jobs:
 
 ```
 
+## Contributing
+
+### Changes
+All changes should can made in `microservices.yml`.
+
+### Publishing
+Before pubishing, changes should be tested via:
+
+```bash
+# validates circleci orb syntax
+$ circleci orb validate microservices.yml
+
+# prints out processed orb; Check it visually
+$ circleci orb process microservices.yml
+
+# publish the orb to CircleCI Orb Registry
+$ circleci orb publish ./microservices.yml mgmorbs/microservices@{semantic version}
+```
+
+For the (last) publish command, you can alternatively publish the orb to a dev version and ask an admin to promote to a semantic version by using:
+
+```
+circleci orb publish ./microservices.yml mgmorbs/microservices@dev:latest
+```
+
 ## Architecture
 
 This orb:
