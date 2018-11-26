@@ -47,7 +47,7 @@ commands:
           command: |
             echo 'export TAG_LATEST="${ECR_APP_IMAGE}:latest"' >> $BASH_ENV
             echo 'export TAG_CI="${ECR_APP_IMAGE}:BUILD_${CIRCLE_BUILD_NUM}"' >> $BASH_ENV
-            echo 'export TAG_COMMIT="${ECR_APP_IMAGE}:COMMIT__${CIRCLE_SHA1}"' >> $BASH_ENV
+            echo 'export TAG_COMMIT="${ECR_APP_IMAGE}:COMMIT_${CIRCLE_SHA1}"' >> $BASH_ENV
 
   build-and-tag-docker-image:
     description: Builds the docker image and tags it with commit and branch
@@ -88,8 +88,7 @@ commands:
       - run:
           name: Run docker compose up test with exit code flag
           command: |
-            echo "Temporarily disabled due to QA downtime"
-            # docker-compose up --exit-code-from test test
+            docker-compose up --exit-code-from test test
 
   populate-secret-ssm-env-vars:
     description:
@@ -106,7 +105,7 @@ commands:
     description: Generate ECS task definition by filling in environment variables.
     steps:
       - run:
-          name: Update ECS Task Definition
+          name: Substitute environment vairables into task definition
           command: |
             envsubst < "task-definition-mgm.json" > "parsed-task-definition-mgm.json"
             echo Generated Task Definition
@@ -167,4 +166,3 @@ jobs:
       - generate-task-definition-from-template
       - publish-task-definition-to-ecr
       - deploy-task-to-ecs
-
