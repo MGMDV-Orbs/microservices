@@ -100,6 +100,13 @@ commands:
             echo 'export SNT_CLIENT_SECRET=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/SNT/ClientCredentials/client_secret" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
             echo 'export OKTA_TOKEN=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/okta/token" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
             echo 'export AWS_GW_API_KEY=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Gateway/apikey" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
+            echo 'export CRED_SVC_USERNAME=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Cred_Svc/username" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
+            echo 'export CRED_SVC_PASSWORD=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Cred_Svc/password" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
+            echo 'export CRED_SVC_CALLBACK_USERNAME=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Cred_Svc/Callback/username" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
+            echo 'export CRED_SVC_CALLBACK_PASSWORD=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Cred_Svc/Callback/password" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
+            echo 'export WALLET_ID=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Dormakaba/wallet" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
+            echo 'export LEGIC_USERNAME=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Legic/username" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
+            echo 'export LEGIC_PASSWORD=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Legic/password" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
 
   generate-task-definition-from-template:
     description: Generate ECS task definition by filling in environment variables.
