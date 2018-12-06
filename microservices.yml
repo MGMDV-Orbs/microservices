@@ -43,6 +43,10 @@ commands:
               echo "export $s" >> $BASH_ENV
             done
       - run:
+          name: Print environment variable configuration JSON fetched from S3
+          command: |
+            cat build-workspace/environment/config.json
+      - run:
           name: Set Full Image Name
           command: |
             echo 'export TAG_LATEST="${ECR_APP_IMAGE}:latest"' >> $BASH_ENV
