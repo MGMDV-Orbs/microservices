@@ -138,7 +138,7 @@ commands:
 jobs:
   # Step 1: Fetch environment configuration for this branch
   # and print diagnostic info
-  initial-setup:
+  setup-env:
     executor: vpn/aws
     steps:
       - print-diagnostics
@@ -155,7 +155,7 @@ jobs:
             - run-docker-compose-tests
 
   # Step 3: Build docker image and push to ECR
-  push-image-to-ecr:
+  update-task:
     executor: vpn/aws
     steps:
       - checkout
@@ -164,7 +164,7 @@ jobs:
       - push-built-image-to-ecr
 
   # Step 4: Deploys build image to ECS by registring task and updating cluster
-  update-ecs-service:
+  deploy-svc:
     executor: vpn/aws
     steps:
       - checkout
