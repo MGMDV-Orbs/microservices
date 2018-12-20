@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  validate:
     docker:
       - image: circleci/circleci-cli:latest
     steps:
@@ -9,7 +9,6 @@ jobs:
           name: "Install `circleci` CLI"
           command: |
             sudo bash -c "$(curl -fSl https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh)"
-            circleci orb
       - run: circleci orb validate ./microservices.yml
       - run: circleci orb process ./microservices.yml
   publish:
@@ -17,13 +16,17 @@ jobs:
       - image: circleci/circleci-cli:latest
     steps:
       - checkout
-      - run: |
-          jq -r '.name' version.json
-          jq -r '.version' version.json
-
+      - run:
+          name: "Publish orb if version.json is > published version"
+          command: |
+            set +e
+            REPO_VERSION=$(jq -r '.version' version.json)
+            circleci orb publish ./microservices.yml mgmorbs/microservices@$REPO_VERSION
 workflows:
   version: 2
   build_and_test:
     jobs:
-      - build
+      - validate
       - publish
+          requires:
+            - ms/setup-env
