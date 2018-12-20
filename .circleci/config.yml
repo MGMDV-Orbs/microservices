@@ -27,6 +27,6 @@ workflows:
   build_and_test:
     jobs:
       - validate
-      - publish
+      - publish:
           requires:
-            - ms/setup-env
+            - validate
