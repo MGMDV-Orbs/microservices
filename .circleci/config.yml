@@ -2,14 +2,14 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/classic
+      - image: circleci/node
     steps:
       - checkout
       - run: circleci orb validate ./microservices.yml
       - run: circleci orb process ./microservices.yml
   publish:
     docker:
-      - image: circleci/classic
+      - image: circleci/node
     steps:
       - checkout
       - run: |
