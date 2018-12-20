@@ -13,8 +13,8 @@ jobs:
     steps:
       - checkout
       - run: |
-        jq -r '.name' version.json
-        jq -r '.version' version.json
+          jq -r '.name' version.json
+          jq -r '.version' version.json
 
 workflows:
   version: 2
