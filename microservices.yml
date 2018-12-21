@@ -25,7 +25,15 @@ commands:
           command: |
             mkdir environment
             echo Using build env var until S3 bucket is created
-            aws s3 cp "s3://mgmresorts-services-configurations/$CIRCLE_PROJECT_REPONAME/$CIRCLE_BRANCH.json" ./environment/config.json
+            echo Use develop config for all but develop/qa4/uat/preprod branches
+            known_branches=(develop qa4 uat preprod)
+            branchIn () {
+              local e
+              for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
+              return 1
+            }
+            config_branch=$(branchIn $CIRCLE_BRANCH "${known_branches[@]}" && echo $CIRCLE_BRANCH || echo develop)
+            aws s3 cp "s3://mgmresorts-services-configurations/$CIRCLE_PROJECT_REPONAME/$config_branch.json" ./environment/config.json            
       - persist_to_workspace:
           root: .
           paths:
