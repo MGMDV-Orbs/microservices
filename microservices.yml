@@ -60,6 +60,7 @@ commands:
             echo 'export TAG_LATEST="${ECR_APP_IMAGE}:latest"' >> $BASH_ENV
             echo 'export TAG_CI="${ECR_APP_IMAGE}:BUILD_${CIRCLE_BUILD_NUM}"' >> $BASH_ENV
             echo 'export TAG_COMMIT="${ECR_APP_IMAGE}:COMMIT_${CIRCLE_SHA1}"' >> $BASH_ENV
+            [ ! -z $CIRCLE_TAG ] && echo 'export TAG_GITTAG="${ECR_APP_IMAGE}:${CIRCLE_TAG}"' >> $BASH_ENV
 
   build-and-tag-docker-image:
     description: Builds the docker image and tags it with commit and branch
@@ -68,6 +69,7 @@ commands:
           name: Build Docker Image
           command: |
             docker build -t $TAG_LATEST -t $TAG_CI -t $TAG_COMMIT -f Dockerfile .
+            [ ! -z $TAG_GITTAG ] && docker tag $TAG_COMMIT $TAG_GITTAG || true
 
   push-built-image-to-ecr:
     description: Pushes built image to ECR based on environment variables
@@ -79,6 +81,7 @@ commands:
             docker push $TAG_COMMIT
             docker push $TAG_CI
             docker push $TAG_LATEST
+            [ ! -z $TAG_GITTAG ] && docker push $TAG_GITTAG || true
 
   install-npm-modules-with-cache:
     description: Installs npm modules from circleci cache (if it exists) and saves results back to cache
@@ -156,7 +159,16 @@ jobs:
       - print-diagnostics
       - fetch-environment-variables-from-s3
 
-  # Step 2: Verify that tests are passing
+  # Step 2: Build docker image and push to ECR
+  build-image-and-push:
+    executor: vpn/aws
+    steps:
+      - checkout
+      - populate-env-vars-into-job
+      - build-and-tag-docker-image
+      - push-built-image-to-ecr
+
+  # Step 3: Verify that tests are passing
   run-tests:
     executor: vpn/aws
     steps:
@@ -165,15 +177,6 @@ jobs:
             - checkout
             - install-npm-modules-with-cache
             - run-docker-compose-tests
-
-  # Step 3: Build docker image and push to ECR
-  update-task:
-    executor: vpn/aws
-    steps:
-      - checkout
-      - populate-env-vars-into-job
-      - build-and-tag-docker-image
-      - push-built-image-to-ecr
 
   # Step 4: Deploys build image to ECS by registring task and updating cluster
   deploy-svc:
