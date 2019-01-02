@@ -110,17 +110,17 @@ commands:
           command: |
             docker run --env LOG_TO_CONSOLE=true --env LOG_TO_FILE=true --env LOGGING_LEVEL=info --env-file common.env --env-file tables.env --env-file assa.env --env-file dorma.env -it ${TAG_COMMIT} npm run test:unit
   run-integration-tests-in-docker:
-    description: Runs tests in docker container
+    description: Runs integration tests in docker container
     steps:
       - run:
-          name: Run unit tests in docker container
+          name: Run integration tests in docker container
           command: |
             docker run --env LOG_TO_CONSOLE=true --env LOG_TO_FILE=true --env LOGGING_LEVEL=info --env-file common.env --env-file tables.env --env-file assa.env --env-file dorma.env -it ${TAG_COMMIT} npm run test:integration
   run-lint-in-docker:
-    description: Runs tests in docker container
+    description: Runs lint in docker container
     steps:
       - run:
-          name: Run unit tests in docker container
+          name: Run lint in docker container
           command: |
             docker run -v /home/circleci/project/reports:/usr/src/app/reports -it ${TAG_COMMIT} npm run ci:lint
       - store_test_results:
@@ -226,7 +226,7 @@ jobs:
             - attach-built-docker-image
             - run-unit-tests-in-docker
 
-  # Step 3b: Verify that unit tests are passing
+  # Step 3b: Verify that integration tests are passing
   run-integration-tests:
     executor: vpn/aws
     steps:
@@ -237,7 +237,7 @@ jobs:
             - attach-built-docker-image
             - run-integration-tests-in-docker
 
-  # Step 3c: Verify that unit tests are passing
+  # Step 3c: Verify that lint is passing
   run-lint:
     executor: vpn/aws
     steps:
