@@ -33,7 +33,7 @@ commands:
               return 1
             }
             config_branch=$(branchIn $CIRCLE_BRANCH "${known_branches[@]}" && echo $CIRCLE_BRANCH || echo develop)
-            aws s3 cp "s3://mgmresorts-services-configurations/$CIRCLE_PROJECT_REPONAME/$config_branch.json" ./environment/config.json            
+            aws s3 cp "s3://mgmresorts-services-configurations/$CIRCLE_PROJECT_REPONAME/$config_branch.json" ./environment/config.json
       - persist_to_workspace:
           root: .
           paths:
@@ -47,6 +47,7 @@ commands:
       - run:
           name: Populate environment variables from config
           command: |
+            [ ! -e build-workspace/environment/config.json ] && mkdir -p build-workspace/environment ; cp environment/config.json build-workspace/environment/config.json || true
             for s in $(cat build-workspace/environment/config.json | jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]" ); do
               echo "export $s" >> $BASH_ENV
             done
@@ -58,9 +59,9 @@ commands:
           name: Set Full Image Name
           command: |
             echo 'export TAG_LATEST="${ECR_APP_IMAGE}:latest"' >> $BASH_ENV
-            echo 'export TAG_CI="${ECR_APP_IMAGE}:BUILD_${CIRCLE_BUILD_NUM}"' >> $BASH_ENV
+            echo 'export TAG_BRANCH="${ECR_APP_IMAGE}:BRANCH_${CIRCLE_BRANCH/\//_}"' >> $BASH_ENV
             echo 'export TAG_COMMIT="${ECR_APP_IMAGE}:COMMIT_${CIRCLE_SHA1}"' >> $BASH_ENV
-            [ ! -z $CIRCLE_TAG ] && echo 'export TAG_GITTAG="${ECR_APP_IMAGE}:${CIRCLE_TAG}"' >> $BASH_ENV
+            [ ! -z $CIRCLE_TAG ] && echo 'export TAG_GITTAG="${ECR_APP_IMAGE}:${CIRCLE_TAG}"' >> $BASH_ENV || true
 
   build-and-tag-docker-image:
     description: Builds the docker image and tags it with commit and branch
@@ -68,8 +69,26 @@ commands:
       - run:
           name: Build Docker Image
           command: |
-            docker build -t $TAG_LATEST -t $TAG_CI -t $TAG_COMMIT -f Dockerfile .
+            docker build -t $TAG_LATEST -t $TAG_BRANCH -t $TAG_COMMIT -f Dockerfile .
             [ ! -z $TAG_GITTAG ] && docker tag $TAG_COMMIT $TAG_GITTAG || true
+      - run:
+          name: Save docker image
+          command: |
+            mkdir -p images
+            docker image save -o images/docker.img $TAG_COMMIT $TAG_LATEST $TAG_BRANCH $TAG_GITTAG
+      - persist_to_workspace:
+          root: .
+          paths: images
+
+  attach-built-docker-image:
+    description: Attach docker image and load it
+    steps:
+      - attach_workspace:
+          at: build-workspace
+      - run:
+          name: Load Image
+          command: |
+            docker load < build-workspace/images/docker.img
 
   push-built-image-to-ecr:
     description: Pushes built image to ECR based on environment variables
@@ -79,31 +98,35 @@ commands:
           command: |
             eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
             docker push $TAG_COMMIT
-            docker push $TAG_CI
+            docker push $TAG_BRANCH
             docker push $TAG_LATEST
             [ ! -z $TAG_GITTAG ] && docker push $TAG_GITTAG || true
 
-  install-npm-modules-with-cache:
-    description: Installs npm modules from circleci cache (if it exists) and saves results back to cache
-    steps:
-      - restore_cache:
-          key: rooms-npm-cache-{{ checksum "package.json" }}
-      - run:
-          name: Install NPM dependencies
-          command: |
-            npm install
-      - save_cache:
-          key: rooms-npm-cache-{{ checksum "package.json" }}
-          paths:
-            - ./node_modules
-
-  run-docker-compose-tests:
-    description: Runs docker compose up tests with proper exit code verification to fail build
+  run-unit-tests-in-docker:
+    description: Runs tests in docker container
     steps:
       - run:
-          name: Run docker compose up test with exit code flag
+          name: Run unit tests in docker container
           command: |
-            docker-compose up --exit-code-from test test
+            docker run --env LOG_TO_CONSOLE=true --env LOG_TO_FILE=true --env LOGGING_LEVEL=info --env-file common.env --env-file tables.env --env-file assa.env --env-file dorma.env -it ${TAG_COMMIT} npm run test:unit
+  run-integration-tests-in-docker:
+    description: Runs tests in docker container
+    steps:
+      - run:
+          name: Run unit tests in docker container
+          command: |
+            docker run --env LOG_TO_CONSOLE=true --env LOG_TO_FILE=true --env LOGGING_LEVEL=info --env-file common.env --env-file tables.env --env-file assa.env --env-file dorma.env -it ${TAG_COMMIT} npm run test:integration
+  run-lint-in-docker:
+    description: Runs tests in docker container
+    steps:
+      - run:
+          name: Run unit tests in docker container
+          command: |
+            docker run -v /home/circleci/project/reports:/usr/src/app/reports -it ${TAG_COMMIT} npm run ci:lint
+      - store_test_results:
+          path: /home/circleci/project/reports
+      - store_artifacts:
+          path: /home/circleci/project/reports
 
   populate-secret-ssm-env-vars:
     description:
@@ -151,6 +174,22 @@ commands:
             aws ecs update-service --cluster ${CLUSTER} --service ${SERVICE} --task-definition ${TASK_FAMILY}:${TASK_REVISION} --desired-count ${DESIRED_COUNT}
 
 jobs:
+  # All in one step...
+  setup-build-test-push-deploy:
+    executor: vpn/aws
+    steps:
+      - vpn/with-vpn-connection:
+          after-vpn-steps:
+            - print-diagnostics
+            - checkout
+            - fetch-environment-variables-from-s3
+            - populate-env-vars-into-job
+            - build-and-tag-docker-image
+            - run-lint-in-docker
+            - run-unit-tests-in-docker
+            - run-integration-tests-in-docker
+            - push-built-image-to-ecr
+
   # Step 1: Fetch environment configuration for this branch
   # and print diagnostic info
   setup-env:
@@ -159,26 +198,55 @@ jobs:
       - print-diagnostics
       - fetch-environment-variables-from-s3
 
-  # Step 2: Build docker image and push to ECR
-  build-image-and-push:
+  # Step 2: Build and tag docker image
+  build-image:
     executor: vpn/aws
     steps:
       - checkout
       - populate-env-vars-into-job
       - build-and-tag-docker-image
+
+  # Step 4: Push images to ECR
+  push-image:
+    executor: vpn/aws
+    steps:
+      - checkout
+      - populate-env-vars-into-job
+      - attach-built-docker-image
       - push-built-image-to-ecr
 
-  # Step 3: Verify that tests are passing
-  run-tests:
+  # Step 3a: Verify that unit tests are passing
+  run-unit-tests:
     executor: vpn/aws
     steps:
       - vpn/with-vpn-connection:
           after-vpn-steps:
             - checkout
-            - install-npm-modules-with-cache
-            - run-docker-compose-tests
+            - populate-env-vars-into-job
+            - attach-built-docker-image
+            - run-unit-tests-in-docker
 
-  # Step 4: Deploys build image to ECS by registring task and updating cluster
+  # Step 3b: Verify that unit tests are passing
+  run-integration-tests:
+    executor: vpn/aws
+    steps:
+      - vpn/with-vpn-connection:
+          after-vpn-steps:
+            - checkout
+            - populate-env-vars-into-job
+            - attach-built-docker-image
+            - run-integration-tests-in-docker
+
+  # Step 3c: Verify that unit tests are passing
+  run-lint:
+    executor: vpn/aws
+    steps:
+      - checkout
+      - populate-env-vars-into-job
+      - attach-built-docker-image
+      - run-lint-in-docker
+
+  # Step 5: Deploys build image to ECS by registring task and updating cluster
   deploy-svc:
     executor: vpn/aws
     steps:
