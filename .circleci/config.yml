@@ -11,6 +11,16 @@ jobs:
             sudo bash -c "$(curl -fSl https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh)"
       - run: circleci orb validate ./microservices.yml
       - run: circleci orb process ./microservices.yml
+  publish-dev:
+    docker:
+      - image: circleci/circleci-cli:latest
+    steps:
+      - checkout
+      - run:
+          name: "Publish development version of orb"
+          command: |
+            set +e
+            circleci orb publish ./microservices.yml mgmorbs/microservices@dev:$CIRCLE_BRANCH --token $ORB_PUBLISHING_TOKEN
   publish:
     docker:
       - image: circleci/circleci-cli:latest
@@ -26,7 +36,13 @@ workflows:
   version: 2
   validate_and_publish:
     jobs:
-      - validate
+      - validate:
+          filters:
+            tags:
+              only: /^v.*/
+      - publish-dev:
+          requires:
+            - validate
       - publish:
           requires:
             - validate
