@@ -116,17 +116,17 @@ commands:
           name: Run integration tests in docker container
           command: |
             make ci-test-integration
-  run-lint-in-docker:
-    description: Runs lint in docker container
+  run-lint:
+    description: Runs lint
     steps:
       - run:
-          name: Run lint in docker container
+          name: Run lint using make
           command: |
-            docker run -v /home/circleci/project/reports:/usr/src/app/reports -it ${TAG_COMMIT} npm run ci:lint
+            make ci-lint
       - store_test_results:
-          path: /home/circleci/project/reports
+          path: ~/project/reports
       - store_artifacts:
-          path: /home/circleci/project/reports
+          path: ~/project/reports
 
   populate-secret-ssm-env-vars:
     description:
@@ -196,7 +196,7 @@ jobs:
             - fetch-environment-variables-from-s3
             - populate-env-vars-into-job
             - build-and-tag-docker-image
-            - run-lint-in-docker
+            - run-lint
             - run-unit-tests-in-docker
             - run-integration-tests-in-docker
             - push-built-image-to-ecr
@@ -250,12 +250,11 @@ jobs:
 
   # Step 3c: Verify that lint is passing
   run-lint:
-    executor: vpn/aws
+    docker:
+      - image: circleci/node:8
     steps:
       - checkout
-      - populate-env-vars-into-job
-      - attach-built-docker-image
-      - run-lint-in-docker
+      - run-lint
 
   # Step 5: Deploys build image to ECS by registring task and updating cluster
   deploy-svc:
