@@ -108,14 +108,14 @@ commands:
       - run:
           name: Run unit tests in docker container
           command: |
-            docker run --env LOG_TO_CONSOLE=true --env LOG_TO_FILE=true --env LOGGING_LEVEL=info --env-file common.env --env-file tables.env --env-file assa.env --env-file dorma.env -it ${TAG_COMMIT} npm run test:unit
+            make ci-test-unit
   run-integration-tests-in-docker:
     description: Runs integration tests in docker container
     steps:
       - run:
           name: Run integration tests in docker container
           command: |
-            docker run --env LOG_TO_CONSOLE=true --env LOG_TO_FILE=true --env LOGGING_LEVEL=info --env-file common.env --env-file tables.env --env-file assa.env --env-file dorma.env -it ${TAG_COMMIT} npm run test:integration
+            make ci-test-integration
   run-lint-in-docker:
     description: Runs lint in docker container
     steps:
