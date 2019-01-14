@@ -164,21 +164,6 @@ jobs:
       - run:
           name: Run audit-ci
           command: audit-ci --critical
-  # All in one step...
-  setup-build-test-push-deploy:
-    executor: vpn/aws
-    steps:
-      - vpn/with-vpn-connection:
-          after-vpn-steps:
-            - print-diagnostics
-            - checkout
-            - fetch-environment-variables-from-s3
-            - populate-env-vars-into-job
-            - build-and-tag-docker-image
-            - run-lint
-            - run-unit-tests-in-docker
-            - run-integration-tests-in-docker
-            - push-built-image-to-ecr
 
   # Step 1: Fetch environment configuration for this branch
   # and print diagnostic info
