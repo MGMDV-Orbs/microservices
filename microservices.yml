@@ -75,7 +75,7 @@ commands:
           paths: images
 
   attach-built-docker-image:
-    description: Attach docker image and load it
+    description: Attach docker image
     steps:
       - attach_workspace:
           at: build-workspace
