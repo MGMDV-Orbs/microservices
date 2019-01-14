@@ -67,15 +67,9 @@ commands:
     description: Builds the docker image and tags it with commit and branch
     steps:
       - run:
-          name: Build Docker Image
+          name: Build, tag and save docker image
           command: |
-            docker build -t $TAG_LATEST -t $TAG_BRANCH -t $TAG_COMMIT -f Dockerfile .
-            [ ! -z $TAG_GITTAG ] && docker tag $TAG_COMMIT $TAG_GITTAG || true
-      - run:
-          name: Save docker image
-          command: |
-            mkdir -p images
-            docker image save -o images/docker.img $TAG_COMMIT $TAG_LATEST $TAG_BRANCH $TAG_GITTAG
+            make build tag export-image
       - persist_to_workspace:
           root: .
           paths: images
