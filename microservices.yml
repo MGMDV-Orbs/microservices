@@ -55,13 +55,6 @@ commands:
           name: Print environment variable configuration JSON fetched from S3
           command: |
             cat build-workspace/environment/config.json
-      - run:
-          name: Set Full Image Name
-          command: |
-            echo 'export TAG_LATEST="${ECR_APP_IMAGE}:latest"' >> $BASH_ENV
-            echo 'export TAG_BRANCH="${ECR_APP_IMAGE}:BRANCH_${CIRCLE_BRANCH/\//_}"' >> $BASH_ENV
-            echo 'export TAG_COMMIT="${ECR_APP_IMAGE}:COMMIT_${CIRCLE_SHA1}"' >> $BASH_ENV
-            [ ! -z $CIRCLE_TAG ] && echo 'export TAG_GITTAG="${ECR_APP_IMAGE}:${CIRCLE_TAG}"' >> $BASH_ENV || true
 
   build-and-tag-docker-image:
     description: Builds the docker image and tags it with commit and branch
