@@ -7,53 +7,78 @@ https://circleci.com/orbs/registry/orb/mgmorbs/microservices
 
 ### Simple Usage with Workflows
 
-This is an example of a drop-in CircleCI configuration that can be placed at `.circleci/config.yml` for any microservice for out-of-the-box builds.
+This is an example of a drop-in CircleCI configuration that can be placed at `.circleci/config.yml` for any microservice for (almost) out-of-the-box builds.
+
+This Orb depends on each service to implement `build tag export-image push-image-to-ecr ci-test-unit ci-test-integration ci-lint` make targets.
 
 ```yml
 version: 2.1
 
 orbs:
-  microservices: mgmorbs/microservices@0.3
+  ms: mgmorbs/microservices@1
 
 workflows:
   version: 2
   build_and_test:
     jobs:
-      # Step 1: Fetches env config and prints diagnostic info
-      - microservices/initial-setup:
+      - ms/setup-env:
           context: microservices
-
-      # Step 2: Runs tests and assures they are passing
-      - microservices/run-tests:
-          requires:
-            - microservices/initial-setup
-          context: microservices
-
-      # Step 3: Builds docker image and push to ECR
-      - microservices/push-image-to-ecr:
+          filters:
+              tags:
+                only: /^v.*/
+      - ms/build-image:
           context: microservices
           requires:
-            - microservices/run-tests
+            - ms/setup-env
+          filters:
+              tags:
+                only: /^v.*/
+      - ms/push-image:
+          context: microservices
+          requires:
+            - ms/build-image
+            - ms/run-unit-tests
+            - ms/run-integration-tests
+            - ms/run-lint
+            - ms/npm-audit
+          filters:
+              tags:
+                only: /^v.*/
+      - ms/run-unit-tests:
+          context: microservices
+          requires:
+            - ms/build-image
+          filters:
+              tags:
+                only: /^v.*/
+      - ms/run-integration-tests:
+          context: microservices
+          requires:
+            - ms/build-image
+          filters:
+              tags:
+                only: /^v.*/
+      - ms/run-lint:
+          filters:
+              tags:
+                only: /^v.*/
+      - ms/npm-audit:
+          filters:
+              tags:
+                only: /^v.*/
+      - hold:
+          type: approval
+          requires:
+            - ms/push-image
           filters:
             branches:
               only:
-                - develop
-                - qa4
-                - uat
-                - master
-
-      # Step 4: Deploys built image to ECS by registring task and updating cluster
-      - microservices/update-ecs-service:
+                - prod
+      - ms/deploy-svc:
           context: microservices
           requires:
-            - microservices/push-image-to-ecr
-          filters:
-            branches:
-              only:
-                - develop
-                - qa4
-                - uat
-                - master
+            - hold
+            - ms/push-image
 ```
 
 ### Advanced Usage with Commands
@@ -67,13 +92,13 @@ For example, this Circle CI `config.yml` calls the `print-diagnostics` command e
 version: 2.1
 
 orbs:
-  microservices: mgmresorts/microservices@0.1.0
+  ms: mgmresorts/microservices@1
 
 jobs:
   initial-setup:
     executor: vpn/aws
     steps:
-      - microservices/print-diagnostics
+      - ms/print-diagnostics
       - run: echo "Custom step after ms Orb command"
 
 ```
