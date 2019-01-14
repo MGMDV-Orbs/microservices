@@ -79,10 +79,6 @@ commands:
     steps:
       - attach_workspace:
           at: build-workspace
-      - run:
-          name: Load Image
-          command: |
-            docker load < build-workspace/images/docker.img
 
   push-built-image-to-ecr:
     description: Pushes built image to ECR based on environment variables
@@ -90,11 +86,7 @@ commands:
       - run:
           name: Push Image to ECR
           command: |
-            eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
-            docker push $TAG_COMMIT
-            docker push $TAG_BRANCH
-            docker push $TAG_LATEST
-            [ ! -z $TAG_GITTAG ] && docker push $TAG_GITTAG || true
+            make push-image-to-ecr
 
   run-unit-tests-in-docker:
     description: Runs tests in docker container
