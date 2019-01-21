@@ -84,13 +84,13 @@ commands:
     description: Installs npm modules from circleci cache (if it exists) and saves results back to cache
     steps:
       - restore_cache:
-          key: rooms-npm-cache-{{ checksum "package.json" }}
+          key: rooms-npm-cache-{{ checksum "package-lock.json" }}
       - run:
           name: Install NPM dependencies
           command: |
             npm install
       - save_cache:
-          key: rooms-npm-cache-{{ checksum "package.json" }}
+          key: rooms-npm-cache-{{ checksum "package-lock.json" }}
           paths:
             - ./node_modules
 
