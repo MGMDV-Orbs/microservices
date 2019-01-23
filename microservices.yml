@@ -33,7 +33,7 @@ commands:
               return 1
             }
             config_branch=$(branchIn $CIRCLE_BRANCH "${known_branches[@]}" && echo $CIRCLE_BRANCH || echo develop)
-            aws s3 cp "s3://mgmresorts-services-configurations/$CIRCLE_PROJECT_REPONAME/$config_branch.json" ./environment/config.json            
+            aws s3 cp "s3://mgmresorts-services-configurations/$CIRCLE_PROJECT_REPONAME/$config_branch.json" ./environment/config.json
       - persist_to_workspace:
           root: .
           paths:
@@ -47,6 +47,7 @@ commands:
       - run:
           name: Populate environment variables from config
           command: |
+            [ ! -e build-workspace/environment/config.json ] && mkdir -p build-workspace/environment ; cp environment/config.json build-workspace/environment/config.json || true
             for s in $(cat build-workspace/environment/config.json | jq -r "to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]" ); do
               echo "export $s" >> $BASH_ENV
             done
@@ -54,20 +55,23 @@ commands:
           name: Print environment variable configuration JSON fetched from S3
           command: |
             cat build-workspace/environment/config.json
-      - run:
-          name: Set Full Image Name
-          command: |
-            echo 'export TAG_LATEST="${ECR_APP_IMAGE}:latest"' >> $BASH_ENV
-            echo 'export TAG_CI="${ECR_APP_IMAGE}:BUILD_${CIRCLE_BUILD_NUM}"' >> $BASH_ENV
-            echo 'export TAG_COMMIT="${ECR_APP_IMAGE}:COMMIT_${CIRCLE_SHA1}"' >> $BASH_ENV
 
   build-and-tag-docker-image:
     description: Builds the docker image and tags it with commit and branch
     steps:
       - run:
-          name: Build Docker Image
+          name: Build, tag and save docker image
           command: |
-            docker build -t $TAG_LATEST -t $TAG_CI -t $TAG_COMMIT -f Dockerfile .
+            make build tag export-image
+      - persist_to_workspace:
+          root: .
+          paths: images
+
+  attach-built-docker-image:
+    description: Attach docker image
+    steps:
+      - attach_workspace:
+          at: build-workspace
 
   push-built-image-to-ecr:
     description: Pushes built image to ECR based on environment variables
@@ -75,32 +79,33 @@ commands:
       - run:
           name: Push Image to ECR
           command: |
-            eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
-            docker push $TAG_COMMIT
-            docker push $TAG_CI
-            docker push $TAG_LATEST
+            make push-image-to-ecr
 
-  install-npm-modules-with-cache:
-    description: Installs npm modules from circleci cache (if it exists) and saves results back to cache
-    steps:
-      - restore_cache:
-          key: rooms-npm-cache-{{ checksum "package.json" }}
-      - run:
-          name: Install NPM dependencies
-          command: |
-            npm install
-      - save_cache:
-          key: rooms-npm-cache-{{ checksum "package.json" }}
-          paths:
-            - ./node_modules
-
-  run-docker-compose-tests:
-    description: Runs docker compose up tests with proper exit code verification to fail build
+  run-unit-tests-in-docker:
+    description: Runs tests in docker container
     steps:
       - run:
-          name: Run docker compose up test with exit code flag
+          name: Run unit tests in docker container
           command: |
-            docker-compose up --exit-code-from test test
+            make ci-test-unit
+  run-integration-tests-in-docker:
+    description: Runs integration tests in docker container
+    steps:
+      - run:
+          name: Run integration tests in docker container
+          command: |
+            make ci-test-integration
+  run-lint:
+    description: Runs lint
+    steps:
+      - run:
+          name: Run lint using make
+          command: |
+            make ci-lint
+      - store_test_results:
+          path: ~/project/reports
+      - store_artifacts:
+          path: ~/project/reports
 
   populate-secret-ssm-env-vars:
     description:
@@ -148,6 +153,18 @@ commands:
             aws ecs update-service --cluster ${CLUSTER} --service ${SERVICE} --task-definition ${TASK_FAMILY}:${TASK_REVISION} --desired-count ${DESIRED_COUNT}
 
 jobs:
+  npm-audit:
+    docker:
+      - image: circleci/node:8
+    steps:
+      - checkout
+      - run:
+          name: Install audit-ci
+          command: sudo npm i -g audit-ci
+      - run:
+          name: Run audit-ci
+          command: audit-ci --critical
+
   # Step 1: Fetch environment configuration for this branch
   # and print diagnostic info
   setup-env:
@@ -156,26 +173,54 @@ jobs:
       - print-diagnostics
       - fetch-environment-variables-from-s3
 
-  # Step 2: Verify that tests are passing
-  run-tests:
-    executor: vpn/aws
-    steps:
-      - vpn/with-vpn-connection:
-          after-vpn-steps:
-            - checkout
-            - install-npm-modules-with-cache
-            - run-docker-compose-tests
-
-  # Step 3: Build docker image and push to ECR
-  update-task:
+  # Step 2: Build and tag docker image
+  build-image:
     executor: vpn/aws
     steps:
       - checkout
       - populate-env-vars-into-job
       - build-and-tag-docker-image
+
+  # Step 4: Push images to ECR
+  push-image:
+    executor: vpn/aws
+    steps:
+      - checkout
+      - populate-env-vars-into-job
+      - attach-built-docker-image
       - push-built-image-to-ecr
 
-  # Step 4: Deploys build image to ECS by registring task and updating cluster
+  # Step 3a: Verify that unit tests are passing
+  run-unit-tests:
+    executor: vpn/aws
+    steps:
+      - vpn/with-vpn-connection:
+          after-vpn-steps:
+            - checkout
+            - populate-env-vars-into-job
+            - attach-built-docker-image
+            - run-unit-tests-in-docker
+
+  # Step 3b: Verify that integration tests are passing
+  run-integration-tests:
+    executor: vpn/aws
+    steps:
+      - vpn/with-vpn-connection:
+          after-vpn-steps:
+            - checkout
+            - populate-env-vars-into-job
+            - attach-built-docker-image
+            - run-integration-tests-in-docker
+
+  # Step 3c: Verify that lint is passing
+  run-lint:
+    docker:
+      - image: circleci/node:8
+    steps:
+      - checkout
+      - run-lint
+
+  # Step 5: Deploys build image to ECS by registring task and updating cluster
   deploy-svc:
     executor: vpn/aws
     steps:
