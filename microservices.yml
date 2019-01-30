@@ -125,32 +125,13 @@ commands:
             echo 'export LEGIC_USERNAME=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Legic/username" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
             echo 'export LEGIC_PASSWORD=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Legic/password" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
 
-  generate-task-definition-from-template:
-    description: Generate ECS task definition by filling in environment variables.
-    steps:
-      - run:
-          name: Substitute environment vairables into task definition
-          command: |
-            envsubst < "task-definition-mgm.json" > "parsed-task-definition-mgm.json"
-            echo Generated Task Definition
-            cat parsed-task-definition-mgm.json
-
-  publish-task-definition-to-ecr:
-    description: Publish generated task definition to ECR.
-    steps:
-      - run:
-          name: Update ECS Task Definition
-          command: |
-            aws ecs register-task-definition --cli-input-json file://parsed-task-definition-mgm.json
-
-  deploy-task-to-ecs:
-    description: Deploy latest task definition in ECR to ECS Service
+  deploy:
+    description: Deploy task definition in ECR to ECS Service
     steps:
       - run:
           name: Deploy New Task Definition to ECS Cluster
           command: |
-            TASK_REVISION="$(aws ecs describe-task-definition --task-definition ${TASK_FAMILY} | egrep "revision" | tr -s ' ' | cut -d ' ' -f 3)"
-            aws ecs update-service --cluster ${CLUSTER} --service ${SERVICE} --task-definition ${TASK_FAMILY}:${TASK_REVISION} --desired-count ${DESIRED_COUNT}
+            make deploy
 
 jobs:
   npm-audit:
@@ -227,6 +208,4 @@ jobs:
       - checkout
       - populate-env-vars-into-job
       - populate-secret-ssm-env-vars
-      - generate-task-definition-from-template
-      - publish-task-definition-to-ecr
-      - deploy-task-to-ecs
+      - deploy
