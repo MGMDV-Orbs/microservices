@@ -125,6 +125,19 @@ commands:
             echo 'export LEGIC_USERNAME=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Legic/username" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
             echo 'export LEGIC_PASSWORD=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Legic/password" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
 
+  add-vpn-hostnames:
+    description: Add VPN resource hostname-to-IP mapping to hosts file
+    steps:
+      - run:
+          name: Add VPN resource hostname-to-IP mapping to hosts file
+          command: |
+            echo '# MGM VPN resources needed for integration tests;
+#Manual fix until DNS is established by networking team.
+172.30.34.41 eaiws-qa.mgmresorts.local
+10.199.1.156 auroraws-qa.mgmresorts.local
+10.114.75.131 tibcows-dmpdev.mgmresorts.local' | sudo tee -a /etc/hosts
+            cat /etc/hosts
+
   deploy:
     description: Deploy task definition in ECR to ECS Service
     steps:
@@ -190,6 +203,7 @@ jobs:
           after-vpn-steps:
             - checkout
             - populate-env-vars-into-job
+            - add-vpn-hostnames
             - attach-built-docker-image
             - run-integration-tests-in-docker
 
