@@ -131,11 +131,11 @@ commands:
       - run:
           name: Add VPN resource hostname-to-IP mapping to hosts file
           command: |
-            echo '# MGM VPN resources needed for integration tests;
-#Manual fix until DNS is established by networking team.
-172.30.34.41 eaiws-qa.mgmresorts.local
-10.199.1.156 auroraws-qa.mgmresorts.local
-10.114.75.131 tibcows-dmpdev.mgmresorts.local' | sudo tee -a /etc/hosts
+            echo '# MGM VPN resources needed for integration tests' | sudo tee -a /etc/hosts
+            echo '# Manual fix until DNS is established by networking team.' | sudo tee -a /etc/hosts
+            echo '172.30.34.41 eaiws-qa.mgmresorts.local' | sudo tee -a /etc/hosts
+            echo '10.199.1.156 auroraws-qa.mgmresorts.local' | sudo tee -a /etc/hosts
+            echo '10.114.75.131 tibcows-dmpdev.mgmresorts.local'  | sudo tee -a /etc/hosts
             cat /etc/hosts
 
   deploy:
