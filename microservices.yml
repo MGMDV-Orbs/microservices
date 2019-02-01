@@ -143,11 +143,11 @@ commands:
       - run:
           name: Check if vpn services have A records in DNS
           command: |
-            dig eaiws-qa.mgmresorts.local
-            dig auroraws-qa.mgmresorts.local
-            dig tibcows-dmpdev.mgmresorts.local
-            dig v00watlappbg01r.mgmmirage.org
-            dig token-fp.mgmresorts.local
+            host -t a eaiws-qa.mgmresorts.local
+            host -t a auroraws-qa.mgmresorts.local
+            host -t a tibcows-dmpdev.mgmresorts.local
+            host -t a v00watlappbg01r.mgmmirage.org
+            host -t a token-fp.mgmresorts.local
 
 jobs:
   npm-audit:
