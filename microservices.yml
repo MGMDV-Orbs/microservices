@@ -134,15 +134,16 @@ commands:
             make deploy
 
   run-dependent-service-dns-tests:
-    description: Test dependent service DNS availability
+    description: Print DNS server and test dependent service DNS availability
     steps:
       - run:
-          name: Ping dependent service hostnames to check if DNS is reachable
+          name: Run dig and check if vpn services have A records in DNS
           command: |
-            ping eaiws-qa.mgmresorts.local -c 5
-            ping auroraws-qa.mgmresorts.local -c 5
-            ping tibcows-dmpdev.mgmresorts.local -c 5
-            ping v00watlappbg01r.mgmmirage.org -c 5
+            dig
+            host -t a eaiws-qa.mgmresorts.local
+            host -t a auroraws-qa.mgmresorts.local
+            host -t a tibcows-dmpdev.mgmresorts.local
+            host -t a v00watlappbg01r.mgmmirage.org
 
 jobs:
   npm-audit:
