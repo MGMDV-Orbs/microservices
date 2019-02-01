@@ -133,7 +133,7 @@ commands:
           command: |
             make deploy
 
-  run-dependent-service-dns-tests:
+  run-dependent-service-ip-tests:
     description: Run DNS checks for VPN-based services
     steps:
       - run:
@@ -143,12 +143,11 @@ commands:
       - run:
           name: Check if vpn services have A records in DNS
           command: |
-            host -t a eaiws-qa.mgmresorts.local
-            host -t a auroraws-qa.mgmresorts.local
-            host -t a tibcows-dmpdev.mgmresorts.local
-            host -t a v00watlappbg01r.mgmmirage.org
-            host -t a token-fp.mgmresorts.local
-
+            host 172.30.34.41
+            host 10.199.1.156
+            host 10.114.75.131
+            host 10.199.8.54
+            host 10.191.113.10
 jobs:
   npm-audit:
     docker:
@@ -232,4 +231,4 @@ jobs:
     steps:
       - vpn/with-vpn-connection:
           after-vpn-steps:
-            - run-dependent-service-dns-tests
+            - run-dependent-service-ip-tests
