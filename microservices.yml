@@ -230,4 +230,6 @@ jobs:
   run-dns-checks:
     executor: vpn/aws
     steps:
-      - run-dependent-service-dns-tests
+      - vpn/with-vpn-connection:
+          after-vpn-steps:
+            - run-dependent-service-dns-tests
