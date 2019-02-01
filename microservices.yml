@@ -133,6 +133,17 @@ commands:
           command: |
             make deploy
 
+  run-dependent-service-dns-tests:
+    description: Test dependent service DNS availability
+    steps:
+      - run:
+          name: Ping dependent service hostnames to check if DNS is reachable
+          command: |
+            ping eaiws-qa.mgmresorts.local -c 5
+            ping auroraws-qa.mgmresorts.local -c 5
+            ping tibcows-dmpdev.mgmresorts.local -c 5
+            ping v00watlappbg01r.mgmmirage.org -c 5
+
 jobs:
   npm-audit:
     docker:
