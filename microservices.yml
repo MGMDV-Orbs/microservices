@@ -133,6 +133,22 @@ commands:
           command: |
             make deploy
 
+  run-dependent-service-dns-tests:
+    description: Run DNS checks for VPN-based services
+    steps:
+      - run:
+          name: Run dig for dns info
+          command: |
+            dig
+      - run:
+          name: Check if vpn services have A records in DNS
+          command: |
+            dig eaiws-qa.mgmresorts.local
+            dig auroraws-qa.mgmresorts.local
+            dig tibcows-dmpdev.mgmresorts.local
+            dig v00watlappbg01r.mgmmirage.org
+            dig token-fp.mgmresorts.local
+
 jobs:
   npm-audit:
     docker:
@@ -209,3 +225,9 @@ jobs:
       - populate-env-vars-into-job
       - populate-secret-ssm-env-vars
       - deploy
+
+  # DNS checks for scheduled nightly integration test runs
+  run-dns-checks:
+    executor: vpn/aws
+    steps:
+      - run-dependent-service-dns-tests
