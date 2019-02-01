@@ -147,6 +147,7 @@ commands:
             host -t a auroraws-qa.mgmresorts.local
             host -t a tibcows-dmpdev.mgmresorts.local
             host -t a v00watlappbg01r.mgmmirage.org
+            host -t a token-fp.mgmresorts.local
 
 jobs:
   npm-audit:
