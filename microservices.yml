@@ -81,13 +81,20 @@ commands:
           command: |
             make push-image-to-ecr
 
+  pull-test-configs:
+    description: Pull env vars needed for tests
+    steps:
+      - run:
+          name: Pull .env files referenced by unit and integ tests
+          command: |
+            aws s3 sync "s3://mgmresorts-services-configurations/$CIRCLE_PROJECT_REPONAME/integration-test-configs/" ./
+
   run-unit-tests-in-docker:
     description: Runs tests in docker container
     steps:
       - run:
           name: Run unit tests in docker container
           command: |
-            aws s3 sync "s3://mgmresorts-services-configurations/$CIRCLE_PROJECT_REPONAME/integration-test-configs/" ./
             make ci-test-unit
 
   run-integration-tests-in-docker:
@@ -96,7 +103,6 @@ commands:
       - run:
           name: Run integration tests in docker container
           command: |
-            aws s3 sync "s3://mgmresorts-services-configurations/$CIRCLE_PROJECT_REPONAME/integration-test-configs/" ./
             make ci-test-integration
   run-lint:
     description: Runs lint
@@ -182,6 +188,7 @@ jobs:
           after-vpn-steps:
             - checkout
             - populate-env-vars-into-job
+            - pull-test-configs
             - attach-built-docker-image
             - run-unit-tests-in-docker
 
@@ -193,6 +200,7 @@ jobs:
           after-vpn-steps:
             - checkout
             - populate-env-vars-into-job
+            - pull-test-configs
             - attach-built-docker-image
             - run-integration-tests-in-docker
 
