@@ -94,6 +94,7 @@ commands:
       - run:
           name: Run integration tests in docker container
           command: |
+            aws s3 sync "s3://mgmresorts-services-configurations/$CIRCLE_PROJECT_REPONAME/integration-test-configs/" ./
             make ci-test-integration
   run-lint:
     description: Runs lint
