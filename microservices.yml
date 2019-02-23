@@ -104,6 +104,7 @@ commands:
           name: Run integration tests in docker container
           command: |
             make ci-test-integration
+
   run-lint:
     description: Runs lint
     steps:
@@ -171,14 +172,6 @@ jobs:
       - populate-env-vars-into-job
       - build-and-tag-docker-image
 
-  # Step 4: Push images to ECR
-  push-image:
-    executor: vpn/aws
-    steps:
-      - checkout
-      - populate-env-vars-into-job
-      - attach-built-docker-image
-      - push-built-image-to-ecr
 
   # Step 3a: Verify that unit tests are passing
   run-unit-tests:
@@ -211,6 +204,15 @@ jobs:
     steps:
       - checkout
       - run-lint
+
+  # Step 4: Push images to ECR
+  push-image:
+    executor: vpn/aws
+    steps:
+      - checkout
+      - populate-env-vars-into-job
+      - attach-built-docker-image
+      - push-built-image-to-ecr
 
   # Step 5: Deploys build image to ECS by registring task and updating cluster
   deploy-svc:
