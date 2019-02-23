@@ -103,7 +103,7 @@ commands:
       - run:
           name: Run integration tests in docker container
           command: |
-            if [ "$SKIP_CI_INTEGRATION_TESTS_FOR_SHA" == "$CIRCLE_SHA1" ]
+            if [ "$SKIP_CI_INTEGRATION_TESTS_FOR_SHA" == "$CIRCLE_SHA1" ]; then
               echo "Integration tests were skipped for commit $SKIP_CI_INTEGRATION_TESTS_FOR_SHA."
               echo "This is controlled by the SKIP_CI_INTEGRATION_TESTS_FOR_SHA environment variable in the integration-test-configs for this project in S3."
             else
