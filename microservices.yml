@@ -101,7 +101,7 @@ commands:
           when: always
           command: |
             npm i -g cucumber-junit
-            cat ./unit-test-results.json | cucumber-junit > ~/unit-tests-output.xml
+            cat ./reports/unit-test-results.json | cucumber-junit > ~/unit-tests-output.xml
       - store_test_results:
           path: ~/unit-tests-output.xml
 
@@ -117,7 +117,7 @@ commands:
           when: always
           command: |
             npm i -g cucumber-junit
-            cat ./integration-test-results.json | cucumber-junit > integration-tests-output.xml
+            cat ./reports/integration-test-results.json | cucumber-junit > integration-tests-output.xml
       - store_test_results:
           path: ./integration-tests-output.xml
 
