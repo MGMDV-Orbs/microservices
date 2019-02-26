@@ -104,6 +104,14 @@ commands:
           name: Run integration tests in docker container
           command: |
             make ci-test-integration
+      - run:
+          name: Store test results as XML for CircleCI
+          when: always
+          command: |
+            npm i -g cucumber-junit
+            cat ./integration-test-results.json | cucumber-junit > integration-tests-output.xml
+      - store_test_results:
+          path: ./integration-tests-output.xml
   run-lint:
     description: Runs lint
     steps:
