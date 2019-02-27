@@ -96,6 +96,16 @@ commands:
           name: Run unit tests in docker container
           command: |
             make ci-test-unit
+      - run:
+          name: Store test results as XML for CircleCI
+          when: always
+          command: |
+            npm i -g cucumber-junit
+            cat ./reports/unit-test-results.json | cucumber-junit > ./reports/unit-tests-output.xml
+      - store_test_results:
+          path: ./reports
+      - store_artifacts:
+          path: ./reports
 
   run-integration-tests-in-docker:
     description: Runs integration tests in docker container
@@ -104,6 +114,17 @@ commands:
           name: Run integration tests in docker container
           command: |
             make ci-test-integration
+      - run:
+          name: Store test results as XML for CircleCI
+          when: always
+          command: |
+            npm i -g cucumber-junit
+            cat ./reports/integration-test-results.json | cucumber-junit > ./reports/integration-tests-output.xml
+      - store_test_results:
+          path: ./reports
+      - store_artifacts:
+          path: ./reports
+
   run-lint:
     description: Runs lint
     steps:
