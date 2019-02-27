@@ -104,6 +104,8 @@ commands:
             cat ./reports/unit-test-results.json | cucumber-junit > ~/unit-tests-output.xml
       - store_test_results:
           path: ~/unit-tests-output.xml
+      - store_artifacts:
+          path: ~/unit-tests-output.xml
 
   run-integration-tests-in-docker:
     description: Runs integration tests in docker container
@@ -119,6 +121,8 @@ commands:
             npm i -g cucumber-junit
             cat ./reports/integration-test-results.json | cucumber-junit > integration-tests-output.xml
       - store_test_results:
+          path: ./integration-tests-output.xml
+      - store_artifacts:
           path: ./integration-tests-output.xml
 
   run-lint:
