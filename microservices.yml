@@ -12,9 +12,9 @@ commands:
           command: |
             echo NodeJS: `node -v`
             echo NPM: `npm -v`
-            echo AWS CLI: `aws --version`
+            echo `aws --version`
+            echo "Okta CLI Version: " `ls ~/.okta/*.jar | head -1`
             echo Docker: `docker -v`
-            echo Access Key: $AWS_ACCESS_KEY_ID
             echo Git Branch/Commit: $CIRCLE_BRANCH/$CIRCLE_SHA1
 
   fetch-environment-variables-from-s3:
