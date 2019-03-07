@@ -132,6 +132,7 @@ circleci orb publish ./microservices.yml mgmorbs/microservices@dev:latest
 
 This orb:
 - depends on the [vpn orb](https://github.com/MGMDV-Orbs/vpn/).
+- depends on [Okta AWS Assume Role CLI](https://github.com/oktadeveloper/okta-aws-cli-assume-role) to setup a trusted session for AWS CLI.
 - exposes Jobs that can be used as drop-in with workflows (see Usage section)
 - exposes underlying discrete Steps used by these Jobs
 - requires usage of `microservices` context (see Usage section)
