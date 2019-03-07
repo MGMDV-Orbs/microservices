@@ -270,6 +270,7 @@ jobs:
     steps:
       - install-okta-aws-cli
       - fetch-environment-variables-from-s3
+      - pull-test-configs-from-s3
       - print-diagnostics
 
   # Step 2: Build and tag docker image
