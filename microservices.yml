@@ -215,6 +215,28 @@ commands:
           paths:
             - .okta
 
+  populate-okta-cli:
+    description: Pull in okta cli jar
+    steps:
+      - attach_workspace:
+          at: ~/build-workspace
+      - run:
+          name: Run jar once to establish session for aws cli
+          command: |
+            # cleanup previous session to avoid initial failures
+            rm -rf ~/.okta/
+            rm -f ~/build-workspace/.okta/cookies.properties
+            rm -f ~/build-workspace/.okta/.current-session
+            rm -f ~/build-workspace/.okta/profiles
+
+            # move jar to home folder to avoid static
+            # reference issues within okta cli
+            cp -r ~/build-workspace/.okta ~/.okta
+
+            # Establish aws session with first command
+            # and print out the identity of th user & account
+            java -jar ~/.okta/okta-aws-cli.jar sts get-caller-identity
+
 jobs:
   npm-audit:
     docker:
@@ -243,6 +265,7 @@ jobs:
     steps:
       - checkout
       - populate-env-vars-into-job
+      - populate-okta-cli
       - build-and-tag-docker-image
 
   # Step 4: Push images to ECR
@@ -251,6 +274,7 @@ jobs:
     steps:
       - checkout
       - populate-env-vars-into-job
+      - populate-okta-cli
       - attach-built-docker-image
       - push-built-image-to-ecr
 
@@ -258,6 +282,7 @@ jobs:
   run-unit-tests:
     executor: vpn/aws
     steps:
+      - populate-okta-cli
       - vpn/with-vpn-connection:
           after-vpn-steps:
             - checkout
@@ -270,6 +295,7 @@ jobs:
   run-integration-tests:
     executor: vpn/aws
     steps:
+      - populate-okta-cli
       - vpn/with-vpn-connection:
           after-vpn-steps:
             - checkout
@@ -292,5 +318,6 @@ jobs:
     steps:
       - checkout
       - populate-env-vars-into-job
+      - populate-okta-cli
       - populate-secret-ssm-env-vars
       - deploy
