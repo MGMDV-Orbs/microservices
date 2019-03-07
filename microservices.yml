@@ -81,14 +81,6 @@ commands:
           command: |
             make push-image-to-ecr
 
-  pull-test-configs:
-    description: Pull env vars needed for tests
-    steps:
-      - run:
-          name: Pull .env files referenced by unit and integ tests
-          command: |
-            aws s3 sync "s3://mgmresorts-services-configurations/$CIRCLE_PROJECT_REPONAME/integration-test-configs/" ./
-
   run-unit-tests-in-docker:
     description: Runs tests in docker container
     steps:
@@ -237,6 +229,27 @@ commands:
             # and print out the identity of th user & account
             java -jar ~/.okta/okta-aws-cli.jar sts get-caller-identity
 
+  pull-test-configs-from-s3:
+    description: Pull env vars needed for tests
+    steps:
+      - run:
+          name: Pull .env files referenced by unit and integ tests
+          command: |
+            mkdir test-suite-configs
+            aws s3 sync "s3://mgmresorts-services-configurations/$CIRCLE_PROJECT_REPONAME/integration-test-configs/" test-suite-configs/
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-suite-configs
+
+  populate-test-configs-from-workspace:
+    description: Pull test suite env files from workspace
+    steps:
+      - run:
+          name: Copy .test suite env files to local directory
+          command: |
+            cp build-workspace/test-suite-configs/* ./
+
 jobs:
   npm-audit:
     docker:
@@ -287,8 +300,7 @@ jobs:
           after-vpn-steps:
             - checkout
             - populate-env-vars-into-job
-            - pull-test-configs
-            - attach-built-docker-image
+            - populate-test-configs-from-workspace
             - run-unit-tests-in-docker
 
   # Step 3b: Verify that integration tests are passing
@@ -300,8 +312,7 @@ jobs:
           after-vpn-steps:
             - checkout
             - populate-env-vars-into-job
-            - pull-test-configs
-            - attach-built-docker-image
+            - populate-test-configs-from-workspace
             - run-integration-tests-in-docker
 
   # Step 3c: Verify that lint is passing
