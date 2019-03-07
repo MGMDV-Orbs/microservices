@@ -163,6 +163,58 @@ commands:
           command: |
             make deploy
 
+  install-okta-aws-cli:
+    description: Install Okta Assume Role Client and tooling
+    steps:
+      - attach_workspace:
+          at: ~/build-workspace
+      - run:
+          name: Install JDK 8 for Okta Assume Role CLI
+          command: |
+            if type -p java; then
+              echo Java already installed
+              java -version
+            else
+              sudo apt install openjdk-8-jdk
+            fi
+      - run:
+          name: Install Okta Assume Role CLI tool
+          command: |
+            mkdir ~/.okta/ && cd "$_"
+            PREFIX=~/.okta bash <(curl -fsSL https://raw.githubusercontent.com/oktadeveloper/okta-aws-cli-assume-role/master/bin/install.sh) -i
+      - run:
+          name: Create okta configuration file for target AWS account
+          command: |
+            cd ~/.okta/
+            case "$CIRCLE_BRANCH" in
+            "prod")
+                echo "Using Prod Config - $OKTA_AWS_PROD_ROLE_TO_ASSUME"
+                OKTA_AWS_ROLE_TO_ASSUME=$OKTA_AWS_PROD_ROLE_TO_ASSUME
+                ;;
+            *)
+                echo "Using NON-prod Config - $OKTA_AWS_PROD_ROLE_TO_ASSUME"
+                OKTA_AWS_ROLE_TO_ASSUME=$OKTA_AWS_NONPROD_ROLE_TO_ASSUME
+                ;;
+            esac
+
+            echo "OKTA_ORG=$OKTA_ORG
+            OKTA_AWS_APP_URL=$OKTA_AWS_APP_URL
+            OKTA_USERNAME=$OKTA_USERNAME
+            OKTA_PASSWORD_CMD=/bin/echo $OKTA_PASSWORD
+            OKTA_AWS_ROLE_TO_ASSUME=$OKTA_AWS_ROLE_TO_ASSUME
+            OKTA_PROFILE=$OKTA_PROFILE
+            OKTA_STS_DURATION=$OKTA_STS_DURATION
+            OKTA_BROWSER_AUTH=false" > config.properties
+      - run:
+          name: Output the IAM Identity of AWS Role trusted by Okta
+          command: |
+            ls -la ~/.okta/
+            java -jar ~/.okta/okta-aws-cli.jar sts get-caller-identity
+      - persist_to_workspace:
+          root: /home/circleci/
+          paths:
+            - .okta
+
 jobs:
   npm-audit:
     docker:
@@ -181,8 +233,9 @@ jobs:
   setup-env:
     executor: vpn/aws
     steps:
-      - print-diagnostics
+      - install-okta-aws-cli
       - fetch-environment-variables-from-s3
+      - print-diagnostics
 
   # Step 2: Build and tag docker image
   build-image:
