@@ -12,9 +12,9 @@ commands:
           command: |
             echo NodeJS: `node -v`
             echo NPM: `npm -v`
-            echo AWS CLI: `aws --version`
+            echo `aws --version`
+            echo "Okta CLI Version: " `ls ~/.okta/*.jar | head -1`
             echo Docker: `docker -v`
-            echo Access Key: $AWS_ACCESS_KEY_ID
             echo Git Branch/Commit: $CIRCLE_BRANCH/$CIRCLE_SHA1
 
   fetch-environment-variables-from-s3:
@@ -80,14 +80,6 @@ commands:
           name: Push Image to ECR
           command: |
             make push-image-to-ecr
-
-  pull-test-configs:
-    description: Pull env vars needed for tests
-    steps:
-      - run:
-          name: Pull .env files referenced by unit and integ tests
-          command: |
-            aws s3 sync "s3://mgmresorts-services-configurations/$CIRCLE_PROJECT_REPONAME/integration-test-configs/" ./
 
   run-unit-tests-in-docker:
     description: Runs tests in docker container
@@ -163,6 +155,101 @@ commands:
           command: |
             make deploy
 
+  install-okta-aws-cli:
+    description: Install Okta Assume Role Client and tooling
+    steps:
+      - attach_workspace:
+          at: ~/build-workspace
+      - run:
+          name: Install JDK 8 for Okta Assume Role CLI
+          command: |
+            if type -p java; then
+              echo Java already installed
+              java -version
+            else
+              sudo apt install openjdk-8-jdk
+            fi
+      - run:
+          name: Install Okta Assume Role CLI tool
+          command: |
+            mkdir ~/.okta/ && cd "$_"
+            PREFIX=~/.okta bash <(curl -fsSL https://raw.githubusercontent.com/oktadeveloper/okta-aws-cli-assume-role/master/bin/install.sh) -i
+      - run:
+          name: Create okta configuration file for target AWS account
+          command: |
+            cd ~/.okta/
+            case "$CIRCLE_BRANCH" in
+            "prod")
+                echo "Using Prod Config - $OKTA_AWS_PROD_ROLE_TO_ASSUME"
+                OKTA_AWS_ROLE_TO_ASSUME=$OKTA_AWS_PROD_ROLE_TO_ASSUME
+                ;;
+            *)
+                echo "Using NON-prod Config - $OKTA_AWS_PROD_ROLE_TO_ASSUME"
+                OKTA_AWS_ROLE_TO_ASSUME=$OKTA_AWS_NONPROD_ROLE_TO_ASSUME
+                ;;
+            esac
+
+            echo "OKTA_ORG=$OKTA_ORG
+            OKTA_AWS_APP_URL=$OKTA_AWS_APP_URL
+            OKTA_USERNAME=$OKTA_USERNAME
+            OKTA_PASSWORD_CMD=/bin/echo $OKTA_PASSWORD
+            OKTA_AWS_ROLE_TO_ASSUME=$OKTA_AWS_ROLE_TO_ASSUME
+            OKTA_PROFILE=$OKTA_PROFILE
+            OKTA_STS_DURATION=$OKTA_STS_DURATION
+            OKTA_BROWSER_AUTH=false" > config.properties
+      - run:
+          name: Output the IAM Identity of AWS Role trusted by Okta
+          command: |
+            ls -la ~/.okta/
+            java -jar ~/.okta/okta-aws-cli.jar sts get-caller-identity
+      - persist_to_workspace:
+          root: /home/circleci/
+          paths:
+            - .okta
+
+  populate-okta-cli:
+    description: Pull in okta cli jar
+    steps:
+      - attach_workspace:
+          at: ~/build-workspace
+      - run:
+          name: Run jar once to establish session for aws cli
+          command: |
+            # cleanup previous session to avoid initial failures
+            rm -rf ~/.okta/
+            rm -f ~/build-workspace/.okta/cookies.properties
+            rm -f ~/build-workspace/.okta/.current-session
+            rm -f ~/build-workspace/.okta/profiles
+
+            # move jar to home folder to avoid static
+            # reference issues within okta cli
+            cp -r ~/build-workspace/.okta ~/.okta
+
+            # Establish aws session with first command
+            # and print out the identity of th user & account
+            java -jar ~/.okta/okta-aws-cli.jar sts get-caller-identity
+
+  pull-test-configs-from-s3:
+    description: Pull env vars needed for tests
+    steps:
+      - run:
+          name: Pull .env files referenced by unit and integ tests
+          command: |
+            mkdir test-suite-configs
+            aws s3 sync "s3://mgmresorts-services-configurations/$CIRCLE_PROJECT_REPONAME/integration-test-configs/" test-suite-configs/
+      - persist_to_workspace:
+          root: .
+          paths:
+            - test-suite-configs
+
+  populate-test-configs-from-workspace:
+    description: Pull test suite env files from workspace
+    steps:
+      - run:
+          name: Copy .test suite env files to local directory
+          command: |
+            cp build-workspace/test-suite-configs/* ./
+
 jobs:
   npm-audit:
     docker:
@@ -181,8 +268,10 @@ jobs:
   setup-env:
     executor: vpn/aws
     steps:
-      - print-diagnostics
+      - install-okta-aws-cli
       - fetch-environment-variables-from-s3
+      - pull-test-configs-from-s3
+      - print-diagnostics
 
   # Step 2: Build and tag docker image
   build-image:
@@ -190,6 +279,7 @@ jobs:
     steps:
       - checkout
       - populate-env-vars-into-job
+      - populate-okta-cli
       - build-and-tag-docker-image
 
   # Step 4: Push images to ECR
@@ -198,6 +288,7 @@ jobs:
     steps:
       - checkout
       - populate-env-vars-into-job
+      - populate-okta-cli
       - attach-built-docker-image
       - push-built-image-to-ecr
 
@@ -205,24 +296,24 @@ jobs:
   run-unit-tests:
     executor: vpn/aws
     steps:
+      - populate-okta-cli
       - vpn/with-vpn-connection:
           after-vpn-steps:
             - checkout
             - populate-env-vars-into-job
-            - pull-test-configs
-            - attach-built-docker-image
+            - populate-test-configs-from-workspace
             - run-unit-tests-in-docker
 
   # Step 3b: Verify that integration tests are passing
   run-integration-tests:
     executor: vpn/aws
     steps:
+      - populate-okta-cli
       - vpn/with-vpn-connection:
           after-vpn-steps:
             - checkout
             - populate-env-vars-into-job
-            - pull-test-configs
-            - attach-built-docker-image
+            - populate-test-configs-from-workspace
             - run-integration-tests-in-docker
 
   # Step 3c: Verify that lint is passing
@@ -239,5 +330,6 @@ jobs:
     steps:
       - checkout
       - populate-env-vars-into-job
+      - populate-okta-cli
       - populate-secret-ssm-env-vars
       - deploy
