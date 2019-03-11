@@ -254,7 +254,7 @@ commands:
     description: Set static AWS resource names
     steps:
       - run:
-          name: Pull .env files referenced by unit and integ tests
+          name: Set static AWS resource names based on AWS account
           command: |
             case "$CIRCLE_BRANCH" in
             "prod")
