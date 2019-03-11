@@ -258,12 +258,12 @@ commands:
           command: |
             case "$CIRCLE_BRANCH" in
             "prod")
-                echo "Using Prod resources"
-                echo "export SVC_CONFIG_S3_BUCKET=mgmresorts-services-configurations" >> $BASH_ENV
+                echo "Using prod resources"
+                echo "export SVC_CONFIG_S3_BUCKET=mgmri-mobapp-production/services-configurations" >> $BASH_ENV
                 ;;
             *)
                 echo "Using non-prod resources"
-                echo "export SVC_CONFIG_S3_BUCKET=mgmri-mobapp-production/services-configurations" >> $BASH_ENV
+                echo "export SVC_CONFIG_S3_BUCKET=mgmresorts-services-configurations" >> $BASH_ENV
                 ;;
             esac
 
