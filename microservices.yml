@@ -26,7 +26,7 @@ commands:
             mkdir environment
             echo Using build env var until S3 bucket is created
             echo Use develop config for all but develop/qa4/uat/preprod branches
-            known_branches=(develop qa4 uat preprod)
+            known_branches=(develop qa4 uat preprod prod)
             branchIn () {
               local e
               for e in "${@:2}"; do [[ "$e" == "$1" ]] && return 0; done
