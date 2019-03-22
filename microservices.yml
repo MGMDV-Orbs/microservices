@@ -320,7 +320,7 @@ commands:
           command: |
             for lambdaDir in $LAMBDA_DIRECTORIES; do
               # 1. get function name from main.tf => aws_lambda_function => function_name property
-              export LAMBDA_NAME=$(cat $lambdaDir/main.tf | grep -A 5 'resource "aws_lambda_function"' | grep function_name | awk '{print $3}' | sed 's/var\.//' | envsubst | sed -e 's/^"//' -e 's/"$//')
+              export LAMBDA_NAME=$(cat $lambdaDir/main.tf | grep -A 5 'resource "aws_lambda_function"' | grep function_name | awk '{print $3}' | sed 's/var\.//g' | envsubst | sed -e 's/^"//' -e 's/"$//')
 
               # 2. write template
               echo '
@@ -370,7 +370,7 @@ commands:
               terraform plan -input=false
               terraform apply -input=false -auto-approve
 
-              LAMBDA_NAME=$(cat main.tf | grep -A 5 'resource "aws_lambda_function"' | grep function_name | awk '{print $3}' | sed 's/var\.//' | envsubst | sed -e 's/^"//' -e 's/"$//')
+              LAMBDA_NAME=$(cat main.tf | grep -A 5 'resource "aws_lambda_function"' | grep function_name | awk '{print $3}' | sed 's/var\.//g' | envsubst | sed -e 's/^"//' -e 's/"$//')
               terraform state pull > ~/project/tf-states-artifacts/$LAMBDA_NAME.json
 
               cd -
