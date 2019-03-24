@@ -79,6 +79,17 @@ workflows:
           requires:
             - hold
             - ms/push-image
+      - ms/publish-aws-lambdas:
+          context: microservices-okta
+          requires:
+            - ms/setup-env
+            - ms/build-image
+            - ms/run-unit-tests
+            - ms/run-integration-tests
+            - ms/run-lint
+          filters:
+            tags:
+              only: /^v.*/
 ```
 
 ### Advanced Usage with Commands
@@ -142,3 +153,32 @@ Commands in this Orb are discrete, common operations across services, with clear
 
 ### Jobs
 Jobs exposed by this Orb are intended to be for drop-in usage of a subset of exposed commands.
+
+### Lambdas
+Use the `publish-aws-lambdas` job found in this drop-in CircleCI configuration with the microservices by adding the following the CircleCI configuration:
+
+```
+- ms/publish-aws-lambdas:
+    context: microservices-okta
+    requires:
+      - ms/setup-env
+      - ms/run-unit-tests
+      - ms/run-integration-tests
+      - ms/run-lint
+    filters:
+      tags:
+        only: /^v.*/
+```
+
+After updating the CircleCI configuration, create a directory named `faas` in the root level and add a lambda directory structure following this example:
+
+```
+faas
+  - { lambdaName }
+    - src
+      - { files for lambda code }
+      - package.json (optional)
+  - main.tf
+```
+
+`main.tf` is required as the terraform entrypoint where resources are created/declared.
