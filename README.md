@@ -155,7 +155,7 @@ Commands in this Orb are discrete, common operations across services, with clear
 Jobs exposed by this Orb are intended to be for drop-in usage of a subset of exposed commands.
 
 ### Lambdas
-Use the `publish-aws-lambdas` job found in this drop-in CircleCI configuration with the microservices by adding the following the CircleCI configuration:
+Use the `publish-aws-lambdas` job found in this drop-in CircleCI configuration with the microservices by adding the following to the CircleCI configuration:
 
 ```
 - ms/publish-aws-lambdas:
