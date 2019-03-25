@@ -293,6 +293,7 @@ commands:
           name: Populate environment variables reused across lambda steps
           command: |
             echo 'export TF_IN_AUTOMATION=true' >> $BASH_ENV
+            echo 'export TF_PLUGIN_CACHE_DIR=$HOME/.terraform.d/plugin-cache'
             echo 'export LAMBDA_DIRECTORIES=$(find ./faas/ -mindepth 1 -maxdepth 1 -type d)' >> $BASH_ENV
       - run:
           name: Map service configuration to terraform tfvar files
