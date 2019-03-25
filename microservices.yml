@@ -305,35 +305,25 @@ commands:
 
             # create terraform.tfvars with all project config values so TF defs can access them
             # this file is auto-loaded by terraform
-            cp build-workspace/environment/config.json terraform.tfvars.json
+            cp build-workspace/environment/config.json faas/terraform.tfvars.json
 
             # create tf var declarations for circleci configuration variables
             for s in $(cat build-workspace/environment/config.json | jq -r "keys[]" ); do
               echo "variable \"$s\" {
               type = \"string\"
-            }" >> circleci-config-vars.tf
-            done
-
-            for lambdaDir in $LAMBDA_DIRECTORIES; do
-              cp terraform.tfvars.json $lambdaDir
-              cp circleci-config-vars.tf $lambdaDir
+            }" >> faas/circleci-config-vars.tf
             done
       - run:
           name: Configure Terraform for aws tfState s3 bucket and okta-generated aws profile
           command: |
-            for lambdaDir in $LAMBDA_DIRECTORIES; do
-              # 1. get function name from main.tf => aws_lambda_function => function_name property
-              export LAMBDA_NAME=$(cat $lambdaDir/main.tf | grep -A 5 'resource "aws_lambda_function"' | grep function_name | awk '{print $3}' | sed 's/var\.//g' | envsubst | sed -e 's/^"//' -e 's/"$//')
-
-              # 2. write template
-              echo '
+            echo '
               # store TG State in S3
               # Terraform block cannot use string interpolation
               # envsubst is used instead (inline variables)
               terraform {
                 backend "s3" {
-                  bucket  = "${TERRAFORM_STATE_S3_BUCKET}"
-                  key     = "${NODE_ENV}/${CIRCLE_PROJECT_REPONAME}/lambdas/${LAMBDA_NAME}.json"
+                  bucket  = "${S3_BUCKET}"
+                  key     = "${NODE_ENV}/${CIRCLE_PROJECT_REPONAME}.json"
                   region  = "${AWS_DEFAULT_REGION}"
                   profile = "${AWS_DEFAULT_PROFILE}"
                 }
@@ -343,9 +333,7 @@ commands:
               provider "aws" {
                 region  = "${AWS_DEFAULT_REGION}"
                 profile = "${AWS_DEFAULT_PROFILE}"
-              }' | envsubst > $lambdaDir/aws-backends.tf
-
-            done
+              }' | envsubst > faas/aws-backend.tf
       - run:
           name: Install npm dependencies if package.json exists
           command: |
@@ -364,23 +352,17 @@ commands:
       - run:
           name: Publish any lambda changes to aws
           command: |
-            mkdir tf-states-artifacts
-
-            for lambdaDir in $LAMBDA_DIRECTORIES; do
-              cd $lambdaDir
-
-              terraform init -input=false
-              terraform plan -input=false
-              terraform apply -input=false -auto-approve
-
-              LAMBDA_NAME=$(cat main.tf | grep -A 5 'resource "aws_lambda_function"' | grep function_name | awk '{print $3}' | sed 's/var\.//g' | envsubst | sed -e 's/^"//' -e 's/"$//')
-              terraform state pull > ~/project/tf-states-artifacts/$LAMBDA_NAME.json
-
-              cd -
-            done
-      - store_artifacts:
-          path: ./tf-states-artifacts
-
+            cd faas
+            time terraform init -input=false
+            time terraform plan -input=false
+            time terraform apply -input=false -auto-approve
+      - run:
+          name: Store Artifacts
+          command: |
+            cd faas
+            mkdir ~/project/tf-states-artifacts
+            terraform state pull > ~/project/tf-states-artifacts/$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM.json
+            cat ~/project/tf-states-artifacts/$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM.json | jq
 jobs:
   publish-aws-lambdas:
     executor: vpn/aws
