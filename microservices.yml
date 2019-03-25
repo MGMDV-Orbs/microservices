@@ -322,7 +322,7 @@ commands:
               # envsubst is used instead (inline variables)
               terraform {
                 backend "s3" {
-                  bucket  = "${S3_BUCKET}"
+                  bucket  = "${TERRAFORM_STATE_S3_BUCKET}"
                   key     = "${NODE_ENV}/${CIRCLE_PROJECT_REPONAME}.json"
                   region  = "${AWS_DEFAULT_REGION}"
                   profile = "${AWS_DEFAULT_PROFILE}"
