@@ -284,6 +284,10 @@ commands:
             unzip terraform_0.11.13_linux_amd64.zip
             sudo mv terraform /usr/local/bin/
             terraform --version
+            mkdir $HOME/.terraform.d/plugin-cache
+            echo 'export TF_IN_AUTOMATION=true' >> $BASH_ENV
+            echo 'export TF_PLUGIN_CACHE_DIR=$HOME/.terraform.d/plugin-cache' >> $BASH_ENV
+
             rm *
 
   setup-each-lambda-env:
@@ -292,8 +296,6 @@ commands:
       - run:
           name: Populate environment variables reused across lambda steps
           command: |
-            echo 'export TF_IN_AUTOMATION=true' >> $BASH_ENV
-            echo 'export TF_PLUGIN_CACHE_DIR=$HOME/.terraform.d/plugin-cache'
             echo 'export LAMBDA_DIRECTORIES=$(find ./faas/ -mindepth 1 -maxdepth 1 -type d)' >> $BASH_ENV
       - run:
           name: Map service configuration to terraform tfvar files
