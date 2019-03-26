@@ -348,7 +348,7 @@ commands:
           command: |
             for lambdaDir in $LAMBDA_DIRECTORIES; do
               cd $lambdaDir/src
-              if [ -e package.json ]
+              if [[ -e package.json && -e package-lock.json ]]
               then
                 npm ci
               fi
