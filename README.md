@@ -174,11 +174,71 @@ After updating the CircleCI configuration, create a directory named `faas` in th
 
 ```
 faas
+  - main.tf
   - { lambdaName }
     - src
       - { files for lambda code }
       - package.json (optional)
-  - main.tf
+    - main.tf
 ```
 
-`main.tf` is required as the terraform entrypoint where resources are created/declared.
+`faas/main.tf` is required as the terraform entrypoint where all project resources are referenced as [Terraform Modules](https://www.terraform.io/docs/configuration/modules.html).
+
+```tf
+# Module to wrap module
+module "activate-profile" {
+  # path to lambda directory
+  source = "./activate-profile"
+
+  # Environment variables used by lambda's main.tf
+  NODE_ENV = "${var.NODE_ENV}"
+  LAMBDA_EXECUTION_ROLE = "${var.LAMBDA_EXECUTION_ROLE}"
+  GSE_HOST = "${var.GSE_HOST}"
+  SERVICE = "${var.SERVICE}"
+}
+```
+
+`faas/{lambda}/main.tf` is the individual lambda terraform.
+
+```tf
+# Variables used in this tf
+variable "NODE_ENV" {}
+variable "LAMBDA_EXECUTION_ROLE" {}
+variable "GSE_HOST" {}
+variable "SERVICE" {}
+
+# Zip the lambda and deps (AWS requirement)
+data "archive_file" "zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/src"
+  output_path = "${path.module}/lambda_function_payload.zip"
+}
+
+# define lambda configuration
+resource "aws_lambda_function" "activate_profile" {
+  filename         = "${data.archive_file.zip.output_path}"
+  function_name    = "${var.NODE_ENV}_${var.SERVICE}_activate_profile"
+  role             = "${var.LAMBDA_EXECUTION_ROLE}"
+  handler          = "index.handler"
+  source_code_hash = "${data.archive_file.zip.output_base64sha256}"
+  runtime          = "nodejs8.10"
+
+  # publish new immutible version on each deploy
+  publish          = true
+
+  # environment variables injected into lambda
+  environment {
+    variables = {
+      GSE_HOST = "${var.GSE_HOST}"
+      FILTER_ROOM_STATES = "${var.FILTER_ROOM_STATES}"
+    }
+  }
+}
+
+# point this alias to the current deployment version of lambda
+resource "aws_lambda_alias" "live" {
+  name             = "live"
+  function_name    = "${aws_lambda_function.activate_profile.arn}"
+  function_version = "${aws_lambda_function.activate_profile.version}"
+}
+```
