@@ -278,12 +278,21 @@ commands:
       - run:
           name: Install terraform and update npm
           command: |
-            npm i -g npm@latest
+            # use node version to match lambda
+            source ~/.bashrc
+            nvm install 8.10
+            nvm use 8.10
 
+            # install npm version with npm ci
+            npm i -g npm@5.7
+
+            # install terraform
             wget https://releases.hashicorp.com/terraform/0.11.13/terraform_0.11.13_linux_amd64.zip
             unzip terraform_0.11.13_linux_amd64.zip
             sudo mv terraform /usr/local/bin/
             terraform --version
+
+            # terraform plugin cache
             mkdir $HOME/.terraform.d/plugin-cache
             echo 'export TF_IN_AUTOMATION=true' >> $BASH_ENV
             echo 'export TF_PLUGIN_CACHE_DIR=$HOME/.terraform.d/plugin-cache' >> $BASH_ENV
@@ -357,12 +366,13 @@ commands:
             time terraform plan -input=false
             time terraform apply -input=false -auto-approve
       - run:
-          name: Store Artifacts
+          name: Output JSON to screen
           command: |
             cd faas
             mkdir ~/project/tf-states-artifacts
             terraform state pull > ~/project/tf-states-artifacts/$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM.json
             cat ~/project/tf-states-artifacts/$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM.json | jq
+
 jobs:
   publish-aws-lambdas:
     executor: vpn/aws
