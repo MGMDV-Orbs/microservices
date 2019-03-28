@@ -350,7 +350,7 @@ commands:
               cd $lambdaDir/src
               if [[ -e package.json && -e package-lock.json ]]
               then
-                npm ci
+                NODE_ENV=production npm ci
               fi
               cd -
             done
