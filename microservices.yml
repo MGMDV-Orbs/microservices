@@ -263,14 +263,128 @@ commands:
             "prod")
                 echo "Using prod resources"
                 echo "export SVC_CONFIG_S3_BUCKET=mgmri-mobapp-production/services-configurations" >> $BASH_ENV
+                echo 'export TERRAFORM_STATE_S3_BUCKET=mgmri-services-tf-state' >> $BASH_ENV
                 ;;
             *)
                 echo "Using non-prod resources"
                 echo "export SVC_CONFIG_S3_BUCKET=mgmresorts-services-configurations" >> $BASH_ENV
+                echo 'export TERRAFORM_STATE_S3_BUCKET=mgmresorts-services-tf-state' >> $BASH_ENV
                 ;;
             esac
 
+  install-terraform-and-npm:
+    description: Install terraform and update npm (for npm ci)
+    steps:
+      - run:
+          name: Install terraform and update npm
+          command: |
+            # use node version to match lambda
+            source ~/.bashrc
+            nvm install 8.10
+            nvm use 8.10
+
+            # install npm version with npm ci
+            npm i -g npm@5.7
+
+            # install terraform
+            wget https://releases.hashicorp.com/terraform/0.11.13/terraform_0.11.13_linux_amd64.zip
+            unzip terraform_0.11.13_linux_amd64.zip
+            sudo mv terraform /usr/local/bin/
+            terraform --version
+
+            # terraform plugin cache
+            mkdir $HOME/.terraform.d/plugin-cache
+            echo 'export TF_IN_AUTOMATION=true' >> $BASH_ENV
+            echo 'export TF_PLUGIN_CACHE_DIR=$HOME/.terraform.d/plugin-cache' >> $BASH_ENV
+
+            rm *
+
+  setup-each-lambda-env:
+    description: Setup each lambda directory with env, aws, and npm deps
+    steps:
+      - run:
+          name: Populate environment variables reused across lambda steps
+          command: |
+            echo 'export LAMBDA_DIRECTORIES=$(find ./faas/ -mindepth 1 -maxdepth 1 -type d)' >> $BASH_ENV
+      - run:
+          name: Map service configuration to terraform tfvar files
+          command: |
+            # manually re-populate env vars due to inconsistent behavior
+            . $BASH_ENV
+
+            # create terraform.tfvars with all project config values so TF defs can access them
+            # this file is auto-loaded by terraform
+            cp build-workspace/environment/config.json faas/terraform.tfvars.json
+
+            # create tf var declarations for circleci configuration variables
+            for s in $(cat build-workspace/environment/config.json | jq -r "keys[]" ); do
+              echo "variable \"$s\" {
+              type = \"string\"
+            }" >> faas/circleci-config-vars.tf
+            done
+      - run:
+          name: Configure Terraform for aws tfState s3 bucket and okta-generated aws profile
+          command: |
+            echo '
+              # store TG State in S3
+              # Terraform block cannot use string interpolation
+              # envsubst is used instead (inline variables)
+              terraform {
+                backend "s3" {
+                  bucket  = "${TERRAFORM_STATE_S3_BUCKET}"
+                  key     = "${NODE_ENV}/${CIRCLE_PROJECT_REPONAME}.json"
+                  region  = "${AWS_DEFAULT_REGION}"
+                  profile = "${AWS_DEFAULT_PROFILE}"
+                }
+              }
+
+              # use okta-generated aws profile (session)
+              provider "aws" {
+                region  = "${AWS_DEFAULT_REGION}"
+                profile = "${AWS_DEFAULT_PROFILE}"
+              }' | envsubst > faas/aws-backend.tf
+      - run:
+          name: Install npm dependencies if package.json exists
+          command: |
+            for lambdaDir in $LAMBDA_DIRECTORIES; do
+              cd $lambdaDir/src
+              if [[ -e package.json && -e package-lock.json ]]
+              then
+                NODE_ENV=production npm ci
+              fi
+              cd -
+            done
+
+  publish-each-lambda:
+    description: Publish each lambda and store tfState as artifact
+    steps:
+      - run:
+          name: Publish any lambda changes to aws
+          command: |
+            cd faas
+            time terraform init -input=false
+            time terraform plan -input=false
+            time terraform apply -input=false -auto-approve
+      - run:
+          name: Output JSON to screen
+          command: |
+            cd faas
+            mkdir ~/project/tf-states-artifacts
+            terraform state pull > ~/project/tf-states-artifacts/$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM.json
+            cat ~/project/tf-states-artifacts/$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM.json | jq
+
 jobs:
+  publish-aws-lambdas:
+    executor: vpn/aws
+    steps:
+      - install-terraform-and-npm
+      - set-aws-account-specific-resources
+      - checkout
+      - populate-okta-cli
+      - populate-env-vars-into-job
+      - setup-each-lambda-env
+      - publish-each-lambda
+
   npm-audit:
     docker:
       - image: circleci/node:8
