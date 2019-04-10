@@ -30,8 +30,6 @@ prodChangeEvent.requestor = danger.github.pr.assignee.login;
 checkDeploymentSummary();
 
 function checkDeploymentSummary() {
-  if (danger.github.pr.base.ref !== 'prod') return;
-
   const hasDeploymentSummarySection = danger.github.pr.body.includes(deploymentSummarySectionTitle)
   const hasDeploymentSummaryText = danger.github.pr.body.split(deploymentSummarySectionTitle).length
     && danger.github.pr.body.split(deploymentSummarySectionTitle)[1].length > 7
