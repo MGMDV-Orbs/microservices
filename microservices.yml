@@ -383,7 +383,7 @@ commands:
             npm i danger
 
             # get dangerfile
-            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/SRV-390/dangerfile.js -O test-dangerfile.js
+            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/SRV-390/dangerfile.js -O dangerfile.js
       - run:
           name: Run danger for Prod PR
           command: |
