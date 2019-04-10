@@ -383,10 +383,7 @@ commands:
             npm i danger
 
             # get dangerfile
-            wget https://api.github.com/repos/MGMResorts/microservices/contents/prod-dangerfile.js \
-              --header="Authorization: token $MAKEFILE_GITHUB_TOKEN" \
-              --header="Accept: application/vnd.github.v3.raw" \
-              -O dangerfile.js
+            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/SRV-390/dangerfile.js -O test-dangerfile.js
       - run:
           name: Run danger for Prod PR
           command: |
