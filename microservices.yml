@@ -381,6 +381,7 @@ commands:
           command: |
             # install danger
             npm i danger
+            npm i danger-plugin-complete-pr
 
             # get dangerfile
             wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/SRV-390/dangerfile.js -O dangerfile.js
