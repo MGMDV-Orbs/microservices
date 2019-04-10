@@ -38,7 +38,10 @@ function checkDeploymentSummary() {
     fail('Deployment Summary section is missing. Add "# Production Deployment Summary" to the end of the PR description followed by changes in this deployment.');
   } else {
     prodChangeEvent.deploymentSummaryText = danger.github.pr.body.split(deploymentSummarySectionTitle)[1];
-    message(`Azure change management system event: ${JSON.stringify(prodChangeEvent)}`);
+    message(
+      `Azure change management system event: 
+      \`\`\`\n ${JSON.stringify(prodChangeEvent, null, 2)} \`\`\` `
+    );
   }
 }
 
