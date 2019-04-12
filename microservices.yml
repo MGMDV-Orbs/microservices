@@ -380,7 +380,7 @@ commands:
           name: Install danger locally and fetch prod PR dangerfile
           command: |
             # install danger
-            npm i danger danger-plugin-complete-pr @azure/event-hubs
+            npm i danger danger-plugin-complete-pr axios @azure/event-hubs
 
             # get dangerfile
             wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/SRV-390/dangerfile.js -O dangerfile.js
