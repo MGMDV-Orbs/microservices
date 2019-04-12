@@ -380,21 +380,15 @@ commands:
           name: Install danger locally and fetch prod PR dangerfile
           command: |
             # install danger
-            npm i danger
-            npm i danger-plugin-complete-pr
+            npm i danger danger-plugin-complete-pr @azure/event-hubs
 
             # get dangerfile
             wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/SRV-390/dangerfile.js -O dangerfile.js
       - run:
-          name: Run danger for Prod PR
+          name: Run danger for Prod PR to validate required change-request fields and send event to Azure
           command: |
             # run dangerfile
             ./node_modules/.bin/danger ci
-      - run:
-          name: Send event to Azure
-          command: |
-            # TO DO: send azure event
-
 
 jobs:
   publish-aws-lambdas:
