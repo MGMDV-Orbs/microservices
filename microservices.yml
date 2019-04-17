@@ -388,7 +388,7 @@ commands:
           name: Run danger for Prod PR to validate required change-request fields and send event to Azure
           command: |
             # run dangerfile
-            ./node_modules/.bin/danger ci
+            ./node_modules/.bin/danger ci --failOnErrors
 
 jobs:
   publish-aws-lambdas:
