@@ -23,19 +23,19 @@ workflows:
   build_and_test:
     jobs:
       - ms/setup-env:
-          context: microservices
+          context: microservices-okta
           filters:
             tags:
               only: /^v.*/
       - ms/build-image:
-          context: microservices
+          context: microservices-okta
           requires:
             - ms/setup-env
           filters:
             tags:
               only: /^v.*/
       - ms/push-image:
-          context: microservices
+          context: microservices-okta
           requires:
             - ms/build-image
             - ms/run-unit-tests
@@ -46,14 +46,14 @@ workflows:
             tags:
               only: /^v.*/
       - ms/run-unit-tests:
-          context: microservices
+          context: microservices-okta
           requires:
             - ms/build-image
           filters:
             tags:
               only: /^v.*/
       - ms/run-integration-tests:
-          context: microservices
+          context: microservices-okta
           requires:
             - ms/build-image
           filters:
@@ -67,16 +67,25 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-      - hold:
-          type: approval
+      - ms/change-management-event:
+          context: microservices-okta
           requires:
             - ms/push-image
           filters:
             branches:
               only:
                 - prod
+      - hold:
+          type: approval
+          requires:
+            - ms/change-management-event
+            - ms/push-image
+          filters:
+            branches:
+              only:
+                - prod
       - ms/deploy-svc:
-          context: microservices
+          context: microservices-okta
           requires:
             - hold
             - ms/push-image
