@@ -16,7 +16,7 @@ This Orb depends on each service to implement `build tag export-image push-image
 version: 2.1
 
 orbs:
-  ms: mgmorbs/microservices@1
+  ms: mgmorbs/microservices@2
 
 workflows:
   version: 2
