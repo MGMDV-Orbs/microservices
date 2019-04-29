@@ -69,7 +69,7 @@ if(hasDeploymentSummary()) {
 
   sendEventToChangeMgmtSystem(prodChangeEvent)
     .then(r =>
-      message(`MGM Change Management system event sent. ${githubFormatJson(prodChangeEvent)}`)
+      message(`All production-dangerfile checks passed. A production change event has been sent to MGM Change Management system. ${githubFormatJson(prodChangeEvent)}`)
     )
     .catch(azureError =>
       fail(`Unable to send Change Management event to Azure. ${githubFormatJson(azureError)}`)
