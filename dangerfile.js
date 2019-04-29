@@ -8,6 +8,7 @@
  *
  * See the orb commands for reference:
  */
+const danger = require('danger')
 const { checkAssignees } = require('danger-plugin-complete-pr')
 const axios = require('axios')
 const { EventHubClient, EventPosition } = require('@azure/event-hubs')
@@ -38,26 +39,45 @@ const hasDeploymentSummary = () => {
 }
 
 /**
- * Send notification to Change Order Azure Function
- * @param  {Object} productionEvent
+ * Sends deployment event to MGM Change Management systems
+ *
+ * @param  {Object} prodChangeEvent
  * @return {Promise}
  */
-const postEventToChangeMgmtSystem = async (productionEvent) => {
-  return await Promise.all([
-    client.send(prodChangeEvent),
-    axios.post(process.env.PROD_CHANGE_ORDER_FUNC_URL, { productionEvent })
+const sendEventToChangeMgmtSystem = (productionEvent) => {
+  return Promise.all([
+    // send event to EventHub for change management
+    client.send(productionEvent),
+
+    // send event to Azure Func for change management
+    axios.post(process.env.PROD_CHANGE_ORDER_FUNC_URL, { productionEvent }),
   ])
 }
+
+const githubFormatJson = msgObj => `\n \`\`\`js \n ${JSON.stringify(msgObj, null, 2)} \n \`\`\``
 
 // Capture Requestor Field
 checkAssignees()
 prodChangeEvent.requestor = danger.github.pr.assignee.login
 
+console.log('Checking Deployment Summary');
+
 // Capture Deployment Summary
 if(hasDeploymentSummary()) {
+
   prodChangeEvent.deploymentSummaryText = danger.github.pr.body.split(deploymentSummarySectionTitle)[1]
-  postEventToChangeMgmtSystem(prodChangeEvent)
-  message(`MGM Change Management system event sent. \n \`\`\`js \n ${JSON.stringify(prodChangeEvent, null, 2)} \n \`\`\` `)
+
+  sendEventToChangeMgmtSystem(prodChangeEvent)
+    .then(r =>
+      message(`MGM Change Management system event sent. ${githubFormatJson(prodChangeEvent)}`)
+    )
+    .catch(azureError =>
+      fail(`Unable to send Change Management event to Azure. ${githubFormatJson(azureError)}`)
+    )
+    // `danger.schedule` method does not work with nested, chained, or Promise.all promises
+    // Necessary hack to get async code to work with danger-js Peril
+    .then(() => process.exit())
+
 } else {
   fail('Deployment Summary section is missing. Add "# Production Deployment Summary" to the end of the PR description followed by changes in this deployment.')
 }
