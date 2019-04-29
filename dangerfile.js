@@ -60,8 +60,6 @@ const githubFormatJson = msgObj => `\n \`\`\`js \n ${JSON.stringify(msgObj, null
 checkAssignees()
 prodChangeEvent.requestor = danger.github.pr.assignee.login
 
-console.log('Checking Deployment Summary');
-
 // Capture Deployment Summary
 if(hasDeploymentSummary()) {
 
