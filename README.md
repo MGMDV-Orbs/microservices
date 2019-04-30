@@ -67,28 +67,29 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-      - ms/prod-change-management-event:
-          context: microservices-okta
-          requires:
-            - ms/push-image
-          filters:
-            branches:
-              only:
-                - prod
       - hold:
           type: approval
           requires:
-            - ms/prod-change-management-event
             - ms/push-image
           filters:
             branches:
               only:
                 - prod
+      - ms/change-management-event:
+          context: microservices-okta
+          requires:
+            - hold
+          filters:
+            branches:
+              only:
+                - preprod
+                - /^prod-.*/
       - ms/deploy-svc:
           context: microservices-okta
           requires:
             - hold
             - ms/push-image
+            - ms/change-management-event
       - ms/publish-aws-lambdas:
           context: microservices-okta
           requires:
