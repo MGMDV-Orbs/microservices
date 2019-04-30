@@ -16,26 +16,26 @@ This Orb depends on each service to implement `build tag export-image push-image
 version: 2.1
 
 orbs:
-  ms: mgmorbs/microservices@1
+  ms: mgmorbs/microservices@2
 
 workflows:
   version: 2
   build_and_test:
     jobs:
       - ms/setup-env:
-          context: microservices
+          context: microservices-okta
           filters:
             tags:
               only: /^v.*/
       - ms/build-image:
-          context: microservices
+          context: microservices-okta
           requires:
             - ms/setup-env
           filters:
             tags:
               only: /^v.*/
       - ms/push-image:
-          context: microservices
+          context: microservices-okta
           requires:
             - ms/build-image
             - ms/run-unit-tests
@@ -46,14 +46,14 @@ workflows:
             tags:
               only: /^v.*/
       - ms/run-unit-tests:
-          context: microservices
+          context: microservices-okta
           requires:
             - ms/build-image
           filters:
             tags:
               only: /^v.*/
       - ms/run-integration-tests:
-          context: microservices
+          context: microservices-okta
           requires:
             - ms/build-image
           filters:
@@ -75,11 +75,21 @@ workflows:
             branches:
               only:
                 - prod
+      - ms/change-management-event:
+          context: microservices-okta
+          requires:
+            - hold
+          filters:
+            branches:
+              only:
+                - preprod
+                - /^prod-.*/
       - ms/deploy-svc:
-          context: microservices
+          context: microservices-okta
           requires:
             - hold
             - ms/push-image
+            - ms/change-management-event
       - ms/publish-aws-lambdas:
           context: microservices-okta
           requires:

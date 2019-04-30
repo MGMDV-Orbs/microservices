@@ -373,6 +373,23 @@ commands:
             terraform state pull > ~/project/tf-states-artifacts/$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM.json
             cat ~/project/tf-states-artifacts/$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM.json | jq
 
+  prod-change-management-event:
+    description: Trigger an event to be published to change management system of record in Azure
+    steps:
+      - run:
+          name: Install danger locally and fetch prod PR dangerfile
+          command: |
+            # install danger
+            npm i danger danger-plugin-complete-pr axios @azure/event-hubs
+
+            # get dangerfile
+            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/SRV-390/dangerfile.js -O dangerfile.js
+      - run:
+          name: Run danger for Prod PR to validate required change-request fields and send event to Azure
+          command: |
+            # run dangerfile
+            ./node_modules/.bin/danger ci --failOnErrors
+
 jobs:
   publish-aws-lambdas:
     executor: vpn/aws
@@ -458,6 +475,13 @@ jobs:
     steps:
       - checkout
       - run-lint
+
+  # Step 5 pre-req for prod only
+  change-management-event:
+    docker:
+      - image: circleci/node:8
+    steps:
+      - prod-change-management-event
 
   # Step 5: Deploys build image to ECS by registring task and updating cluster
   deploy-svc:
