@@ -153,6 +153,7 @@ commands:
       - run:
           name: Deploy New Task Definition to ECS Cluster
           command: |
+            . $BASH_ENV
             make deploy
 
   install-okta-aws-cli:
