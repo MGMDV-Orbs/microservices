@@ -94,6 +94,15 @@ commands:
           command: |
             npm i -g cucumber-junit
             cat ./reports/unit-test-results.json | cucumber-junit > ./reports/unit-tests-output.xml
+      - run:
+          name: Upload unit test results to Jira Xray
+          when: always
+          command: |
+            # get push-test-results-to-xray.sh
+            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
+
+            # run script to push results to Jira
+            push-test-results-to-xray.sh ./reports/unit-test-results.json SRV
       - store_test_results:
           path: ./reports
       - store_artifacts:
