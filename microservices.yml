@@ -94,10 +94,16 @@ commands:
           command: |
             npm i -g cucumber-junit
             cat ./reports/unit-test-results.json | cucumber-junit > ./reports/unit-tests-output.xml
+      - run:
+          name: Upload unit test results to Jira Xray
+          when: always
+          command: |
+            .circleci/push-test-results-to-xray.sh
       - store_test_results:
           path: ./reports
       - store_artifacts:
           path: ./reports
+      
 
   run-integration-tests-in-docker:
     description: Runs integration tests in docker container
