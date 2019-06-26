@@ -98,7 +98,7 @@ commands:
           name: Upload unit test results to Jira Xray
           when: always
           command: |
-            .circleci/push-test-results-to-xray.sh ./reports/unit-test-results.json SRV
+            $(pwd)/.circleci/push-test-results-to-xray.sh ./reports/unit-test-results.json SRV
       - store_test_results:
           path: ./reports
       - store_artifacts:
