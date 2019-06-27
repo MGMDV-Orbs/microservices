@@ -102,7 +102,7 @@ commands:
             wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
 
             # run script to push results to Jira
-            push-test-results-to-xray.sh ./reports/unit-test-results.json SRV
+            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/unit-test-mocha-results.xml SRV
       - store_test_results:
           path: ./reports
       - store_artifacts:
