@@ -421,18 +421,18 @@ commands:
           command: |
            # get push-test-results-to-xray.sh
             wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray-r2.2/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
-      - run:
-          name: Upload Mocha integration test results to Jira Xray
-          when: always
-          command: |
-            # run script to push results to Jira
-            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/integration-test-mocha-results.xml SRV junit
-      - run:
-          name: Upload Cucumber integration test results to Jira Xray
-          when: always
-          command: |
-            # run script to push results to Jira
-            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/integration-test-results.json SRV cucumber
+      # - run:
+      #     name: Upload Mocha integration test results to Jira Xray
+      #     when: always
+      #     command: |
+      #       # run script to push results to Jira
+      #       bash /home/circleci/project/push-test-results-to-xray.sh ./reports/integration-test-mocha-results.xml SRV junit
+      # - run:
+      #     name: Upload Cucumber integration test results to Jira Xray
+      #     when: always
+      #     command: |
+      #       # run script to push results to Jira
+      #       bash /home/circleci/project/push-test-results-to-xray.sh ./reports/integration-test-results.json SRV cucumber
 
 jobs:
   publish-aws-lambdas:
