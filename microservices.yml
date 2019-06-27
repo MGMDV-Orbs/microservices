@@ -94,15 +94,21 @@ commands:
           command: |
             npm i -g cucumber-junit
             cat ./reports/unit-test-results.json | cucumber-junit > ./reports/unit-tests-output.xml
+
+            # get push-test-results-to-xray.sh
+            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray-r2.1/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
+
+            # run script to push results to Jira
+            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/unit-tests-output.json SRV cucumber
       - run:
           name: Upload Mocha unit test results to Jira Xray
           when: always
           command: |
             # get push-test-results-to-xray.sh
-            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
+            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray-r2.1/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
 
             # run script to push results to Jira
-            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/unit-test-mocha-results.xml SRV
+            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/unit-test-mocha-results.xml SRV junit
       - store_test_results:
           path: ./reports
       - store_artifacts:
@@ -122,6 +128,11 @@ commands:
           command: |
             npm i -g cucumber-junit
             cat ./reports/integration-test-results.json | cucumber-junit > ./reports/integration-tests-output.xml
+            # get push-test-results-to-xray.sh
+            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray-r2.1/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
+
+            # run script to push results to Jira
+            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/integration-tests-output.json SRV cucumber
       - store_test_results:
           path: ./reports
       - store_artifacts:
@@ -131,10 +142,10 @@ commands:
           when: always
           command: |
             # get push-test-results-to-xray.sh
-            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
+            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray-r2.1/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
 
             # run script to push results to Jira
-            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/integration-test-mocha-results.xml SRV
+            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/integration-test-mocha-results.xml SRV junit
 
   run-lint:
     description: Runs lint
