@@ -401,8 +401,8 @@ commands:
             # run dangerfile
             ./node_modules/.bin/danger ci --failOnErrors
 
-  publish-test-results-to-xray:
-    description: Publish all test results to Jira Xray
+  publish-unit-test-results-to-xray:
+    description: Publish all unit test results to Jira Xray
     steps:
       - run:
           name: Download publish to Xray script
@@ -415,6 +415,15 @@ commands:
           command: |
             # run script to push results to Jira
             bash /home/circleci/project/push-test-results-to-xray.sh ./reports/unit-test-mocha-results.xml SRV junit
+  
+  publish-integration-test-results-to-xray:
+    description: Publish all integration test results to Jira Xray
+    steps:
+      - run:
+          name: Download publish to Xray script
+          command: |
+           # get push-test-results-to-xray.sh
+            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray-r2.2/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
       - run:
           name: Upload Mocha integration test results to Jira Xray
           when: always
@@ -487,7 +496,7 @@ jobs:
             - populate-env-vars-into-job
             - populate-test-configs-from-workspace
             - run-unit-tests-in-docker
-            - publish-to-xray-event
+            - publish-unit-test-results-to-xray
 
   # Step 3b: Verify that integration tests are passing
   run-integration-tests:
@@ -500,7 +509,7 @@ jobs:
             - populate-env-vars-into-job
             - populate-test-configs-from-workspace
             - run-integration-tests-in-docker
-            - publish-to-xray-event
+            - publish-integration-test-results-to-xray
 
   # Step 3c: Verify that lint is passing
   run-lint:
@@ -509,12 +518,6 @@ jobs:
     steps:
       - checkout
       - run-lint
-
-  # Step 3d: Upload to test results to Jira Xray
-  publish-to-xray-event:
-    executor: vpn/aws
-    steps:
-      - publish-test-results-to-xray
 
   # Step 5 pre-req for prod only
   change-management-event:
