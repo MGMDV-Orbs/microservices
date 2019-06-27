@@ -95,7 +95,7 @@ commands:
             npm i -g cucumber-junit
             cat ./reports/unit-test-results.json | cucumber-junit > ./reports/unit-tests-output.xml
       - run:
-          name: Upload unit test results to Jira Xray
+          name: Upload Mocha unit test results to Jira Xray
           when: always
           command: |
             # get push-test-results-to-xray.sh
@@ -127,14 +127,14 @@ commands:
       - store_artifacts:
           path: ./reports
       - run:
-          name: Upload unit test results to Jira Xray
+          name: Upload Mocha integration test results to Jira Xray
           when: always
           command: |
             # get push-test-results-to-xray.sh
             wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
 
             # run script to push results to Jira
-            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/integration-tests-output.xml SRV
+            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/integration-test-mocha-results.xml SRV
 
   run-lint:
     description: Runs lint
