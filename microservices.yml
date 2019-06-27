@@ -126,6 +126,15 @@ commands:
           path: ./reports
       - store_artifacts:
           path: ./reports
+      - run:
+          name: Upload unit test results to Jira Xray
+          when: always
+          command: |
+            # get push-test-results-to-xray.sh
+            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
+
+            # run script to push results to Jira
+            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/integration-tests-output.xml SRV
 
   run-lint:
     description: Runs lint
