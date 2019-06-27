@@ -32,7 +32,7 @@ XRAY_AUTH_TOKEN=$(\
 )
 
 # Supporting 2 file type API upload methods
-if [$TEST_TYPE = 'cucumber']; then
+if ["$TEST_TYPE" = "cucumber"]; then
 
   RESULTS=$(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/cucumber?projectKey=$PROJECT_CODE&revision=$CIRCLE_SHA1" \
     -H "Content-Type: application/json" \
