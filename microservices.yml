@@ -487,6 +487,7 @@ jobs:
             - populate-env-vars-into-job
             - populate-test-configs-from-workspace
             - run-unit-tests-in-docker
+            - publish-to-xray-event
 
   # Step 3b: Verify that integration tests are passing
   run-integration-tests:
@@ -499,6 +500,7 @@ jobs:
             - populate-env-vars-into-job
             - populate-test-configs-from-workspace
             - run-integration-tests-in-docker
+            - publish-to-xray-event
 
   # Step 3c: Verify that lint is passing
   run-lint:
