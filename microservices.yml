@@ -419,7 +419,7 @@ commands:
       - run:
           name: Download publish to Xray script
           command: |
-           # get push-test-results-to-xray.sh
+            # get push-test-results-to-xray.sh
             wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray-r2.3/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
       - run:
           name: Upload Mocha integration test results to Jira Xray
