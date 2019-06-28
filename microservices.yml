@@ -1,4 +1,4 @@
-version: 2.1
+version: 2.2
 
 orbs:
   vpn: mgmorbs/vpn@0.1.0
@@ -399,7 +399,7 @@ commands:
           name: Download publish to Xray script
           command: |
            # get push-test-results-to-xray.sh
-            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray-r2.2/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
+            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray-r2.3/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
       - run:
           name: Upload Mocha unit test results to Jira Xray
           when: always
@@ -420,7 +420,7 @@ commands:
           name: Download publish to Xray script
           command: |
            # get push-test-results-to-xray.sh
-            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray-r2.2/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
+            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray-r2.3/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
       - run:
           name: Upload Mocha integration test results to Jira Xray
           when: always
