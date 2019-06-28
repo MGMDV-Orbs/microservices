@@ -30,9 +30,10 @@ XRAY_AUTH_TOKEN=$(\
     --data "{ \"client_id\": \"$XRAY_CLIENT_ID\", \"client_secret\": \"$XRAY_CLIENT_SECRET\" }" \
     | tr -d '"'
 )
+# echo "XRAY_AUTH_TOKEN = $XRAY_AUTH_TOKEN"
 
 # Supporting 2 file type API upload methods
-if ["$TEST_TYPE" = "cucumber"]; then
+if [ "$TEST_TYPE" == "cucumber" ]; then
 
   RESULTS=$(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/cucumber?projectKey=$PROJECT_CODE&revision=$CIRCLE_SHA1" \
     -H "Content-Type: application/json" \
@@ -40,6 +41,7 @@ if ["$TEST_TYPE" = "cucumber"]; then
     -H "Authorization: Bearer $XRAY_AUTH_TOKEN" \
     --data @"$TEST_RESULTS_FILE"
   )
+
 else
 
   RESULTS=$(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/junit?projectKey=$PROJECT_CODE&revision=$CIRCLE_SHA1" \
@@ -48,7 +50,7 @@ else
     -H "Authorization: Bearer $XRAY_AUTH_TOKEN" \
     --data @"$TEST_RESULTS_FILE"
   )
-fi
 
+fi
 
 echo "UPLOAD RESULT = $RESULTS"
