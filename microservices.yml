@@ -176,6 +176,7 @@ commands:
             echo 'export WALLET_ID=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Dormakaba/wallet" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
             echo 'export LEGIC_USERNAME=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Legic/username" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
             echo 'export LEGIC_PASSWORD=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Legic/password" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
+            echo 'export MGM_SSL_CERT=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/MGM_SSL_CERT" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
 
   deploy:
     description: Deploy task definition in ECR to ECS Service
