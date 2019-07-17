@@ -164,7 +164,7 @@ commands:
           command: |
             . $BASH_ENV
             npm i
-            docker-compose up --build document
+            npm run document
       - run:
           name: publish to s3 bucket under $service/$semantic_tag.json pattern
           command: |
