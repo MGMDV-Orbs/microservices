@@ -552,6 +552,7 @@ jobs:
     steps:
       - checkout
       - populate-env-vars-into-job
+      - set-aws-account-specific-resources
       - populate-okta-cli
       - populate-test-configs-from-workspace
       - publish-swagger-to-s3-for-tag
