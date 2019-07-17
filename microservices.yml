@@ -168,6 +168,7 @@ commands:
       - run:
           name: publish to s3 bucket under $service/$semantic_tag.json pattern
           command: |
+            echo "Swagger spec being sent to S3 ($SWAGGER_BUCKET/$CIRCLE_PROJECT_REPONAME/$CIRCLE_TAG.json)
             aws s3 cp ./swagger.json s3://$SWAGGER_BUCKET/$CIRCLE_PROJECT_REPONAME/$CIRCLE_TAG.json
       - store_artifacts:
           path: ./swagger.json
