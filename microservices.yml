@@ -156,6 +156,23 @@ commands:
             . $BASH_ENV
             make deploy
 
+  publish-swagger-to-s3-for-tag:
+    description: Publish the API Open API spec (swagger doc) to S3 for API updates
+    steps:
+      - run:
+          name: Run documentation npm script
+          command: |
+            . $BASH_ENV
+            npm i
+            docker-compose up --build document
+      - run:
+          name: publish to s3 bucket under $service/$semantic_tag.json pattern
+          command: |
+            echo "Swagger spec being sent to S3 ($SWAGGER_BUCKET/$CIRCLE_PROJECT_REPONAME/$CIRCLE_TAG.json)"
+            aws s3 cp ./swagger.json s3://$SWAGGER_BUCKET/$CIRCLE_PROJECT_REPONAME/$CIRCLE_TAG.json
+      - store_artifacts:
+          path: ./swagger.json
+
   install-okta-aws-cli:
     description: Install Okta Assume Role Client and tooling
     steps:
@@ -188,7 +205,7 @@ commands:
                 OKTA_AWS_ROLE_TO_ASSUME=$OKTA_AWS_PROD_ROLE_TO_ASSUME
                 ;;
             *)
-                echo "Using NON-prod Config - $OKTA_AWS_PROD_ROLE_TO_ASSUME"
+                echo "Using NON-prod Config - $OKTA_AWS_NONPROD_ROLE_TO_ASSUME"
                 OKTA_AWS_ROLE_TO_ASSUME=$OKTA_AWS_NONPROD_ROLE_TO_ASSUME
                 ;;
             esac
@@ -265,11 +282,13 @@ commands:
                 echo "Using prod resources"
                 echo "export SVC_CONFIG_S3_BUCKET=mgmri-mobapp-production/services-configurations" >> $BASH_ENV
                 echo 'export TERRAFORM_STATE_S3_BUCKET=mgmri-services-tf-state' >> $BASH_ENV
+                echo 'export SWAGGER_BUCKET=mgmri-services-swagger-specs' >> $BASH_ENV
                 ;;
             *)
                 echo "Using non-prod resources"
                 echo "export SVC_CONFIG_S3_BUCKET=mgmresorts-services-configurations" >> $BASH_ENV
                 echo 'export TERRAFORM_STATE_S3_BUCKET=mgmresorts-services-tf-state' >> $BASH_ENV
+                echo 'export SWAGGER_BUCKET=mgmresorts-services-swagger-specs' >> $BASH_ENV
                 ;;
             esac
 
@@ -406,12 +425,6 @@ commands:
           command: |
             # run script to push results to Jira
             bash /home/circleci/project/push-test-results-to-xray.sh ./reports/unit-test-mocha-results.xml SRV junit
-      # - run:
-      #     name: Upload Cucumber unit test results to Jira Xray
-      #     when: always
-      #     command: |
-      #       # run script to push results to Jira
-      #       bash /home/circleci/project/push-test-results-to-xray.sh ./reports/unit-test-results.json SRV cucumber
 
   publish-integration-test-results-to-xray:
     description: Publish all integration test results to Jira Xray
@@ -428,13 +441,6 @@ commands:
           command: |
             # run script to push results to Jira
             bash /home/circleci/project/push-test-results-to-xray.sh ./reports/integration-test-mocha-results.xml SRV junit
-
-      # - run:
-      #     name: Upload Cucumber integration test results to Jira Xray
-      #     when: always
-      #     command: |
-      #       # run script to push results to Jira
-      #       bash /home/circleci/project/push-test-results-to-xray.sh ./reports/integration-test-results.json SRV cucumber
 
 jobs:
   publish-aws-lambdas:
@@ -540,3 +546,13 @@ jobs:
       - populate-okta-cli
       - populate-secret-ssm-env-vars
       - deploy
+
+  publish-swagger:
+    executor: vpn/aws
+    steps:
+      - checkout
+      - populate-env-vars-into-job
+      - set-aws-account-specific-resources
+      - populate-okta-cli
+      - populate-test-configs-from-workspace
+      - publish-swagger-to-s3-for-tag
