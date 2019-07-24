@@ -81,6 +81,36 @@ commands:
           command: |
             make push-image-to-ecr
 
+  push-built-image-to-prod-ecr:
+    description: Publish docker image to production ECR
+    steps:
+      - install-okta-aws-cli
+      - run:
+          name: Switch to PRODUCTION aws account
+          command: |
+            rm -f ~/.okta/cookies.properties
+            rm -f ~/.okta/.current-session
+            rm -f ~/.okta/profiles
+
+            sed "s~OKTA_AWS_ROLE_TO_ASSUME=.*~OKTA_AWS_ROLE_TO_ASSUME=$OKTA_AWS_PROD_ROLE_TO_ASSUME~g" -i ~/.okta/config.properties
+            java -jar ~/.okta/okta-aws-cli.jar sts get-caller-identity
+      - run:
+          name: Push Image to production ECR
+          command: |
+            echo "export ECR_APP_IMAGE_ORIGINAL=$ECR_APP_IMAGE" >> $BASH_ENV
+            echo "export ECR_APP_IMAGE=$(aws sts get-caller-identity | jq -r '.Account').dkr.ecr.us-west-2.amazonaws.com/devices" >> $BASH_ENV
+            echo "Manually set ECR_APP_IMAGE to $ECR_APP_IMAGE_ORIGINAL for prod aws account access"
+            . $BASH_ENV
+            make build tag push-image-to-ecr
+      - run:
+          name: Reset CircleCI branch env var
+          command: |
+            echo "export ECR_APP_IMAGE=$ECR_APP_IMAGE_ORIGINAL" >> $BASH_ENV
+            . $BASH_ENV
+            echo "Manually revert ECR_APP_IMAGE to $ECR_APP_IMAGE_ORIGINAL inorder to switch okta cli back to non-prod aws account"
+            rm -r ~/.okta
+      - install-okta-aws-cli
+
   run-unit-tests-in-docker:
     description: Runs tests in docker container
     steps:
@@ -495,6 +525,14 @@ jobs:
       - populate-okta-cli
       - attach-built-docker-image
       - push-built-image-to-ecr
+
+  push-image-prod:
+    executor: vpn/aws
+    steps:
+      - checkout
+      - populate-env-vars-into-job
+      - attach-built-docker-image
+      - push-built-image-to-prod-ecr
 
   # Step 3a: Verify that unit tests are passing
   run-unit-tests:

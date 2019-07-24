@@ -34,6 +34,15 @@ workflows:
           filters:
             tags:
               only: /^v.*/
+      - ms/push-image-prod:
+          context: microservices-okta
+          requires:
+            - ms/build-image
+          filters:
+            tags:
+              only: /^v.*/
+          branches:
+            ignore: /.*/
       - ms/push-image:
           context: microservices-okta
           requires:
