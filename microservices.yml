@@ -80,6 +80,9 @@ commands:
           name: Push Image to ECR
           command: |
             make push-image-to-ecr
+  push-built-image-to-prod-ecr:
+    description: Publish docker image to production ECR
+    steps:
       - run:
           name: Switch to PRODUCTION aws account
           command: |
@@ -95,8 +98,7 @@ commands:
             echo "export ECR_APP_IMAGE_ORIGINAL=$ECR_APP_IMAGE" >> $BASH_ENV
             echo "export ECR_APP_IMAGE=$(aws sts get-caller-identity | jq -r '.Account').dkr.ecr.us-west-2.amazonaws.com/devices" >> $BASH_ENV
             . $BASH_ENV
-            make build tag
-            make push-image-to-ecr
+            make build tag push-image-to-ecr
       - run:
           name: Reset CircleCI branch env var
           command: |
