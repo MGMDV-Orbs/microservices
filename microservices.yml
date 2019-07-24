@@ -92,7 +92,7 @@ commands:
             rm -f ~/.okta/.current-session
             rm -f ~/.okta/profiles
 
-            cat ~/.okta/config.properties | sed -i "s~OKTA_AWS_ROLE_TO_ASSUME=.*~OKTA_AWS_ROLE_TO_ASSUME=$OKTA_AWS_PROD_ROLE_TO_ASSUME~g"
+            sed "s~OKTA_AWS_ROLE_TO_ASSUME=.*~OKTA_AWS_ROLE_TO_ASSUME=$OKTA_AWS_PROD_ROLE_TO_ASSUME~g" -i ~/.okta/config.properties
             java -jar ~/.okta/okta-aws-cli.jar sts get-caller-identity
       - run:
           name: Push Image to production ECR
