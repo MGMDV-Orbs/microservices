@@ -77,7 +77,15 @@ commands:
     description: Pushes built image to ECR based on environment variables
     steps:
       - run:
-          name: Push Image to ECR
+          name: Push Image to non-prod ECR
+          command: |
+            make push-image-to-ecr
+
+            # Delete Okta directory to switch to production aws account
+            rm -r ~/.okta
+      - ms/install-okta-aws-cli
+      - run:
+          name: Push Image to production ECR
           command: |
             make push-image-to-ecr
 
