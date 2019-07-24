@@ -77,17 +77,30 @@ commands:
     description: Pushes built image to ECR based on environment variables
     steps:
       - run:
-          name: Push Image to non-prod ECR
+          name: Push Image to ECR
           command: |
             make push-image-to-ecr
-
-            # Delete Okta directory to switch to production aws account
+      - run:
+          name: Switch to PRODUCTION aws account
+          command: |
+            echo "export ORIGINAL_CIRCLE_BRANCH=$CIRCLE_BRANCH" >> $BASH_ENV
+            echo "export CIRCLE_BRANCH=prod" >> $BASH_ENV
+            . $BASH_ENV
+            echo "Manually set CIRCLE_BRANCH to $CIRCLE_BRANCH inorder to force-switch okta cli to production aws account"
             rm -r ~/.okta
-      - ms/install-okta-aws-cli
+      - install-okta-aws-cli
       - run:
           name: Push Image to production ECR
           command: |
             make push-image-to-ecr
+      - run:
+          name: Reset CircleCI branch env var
+          command: |
+            echo "export CIRCLE_BRANCH=$ORIGINAL_CIRCLE_BRANCH" >> $BASH_ENV
+            . $BASH_ENV
+            echo "Manually set CIRCLE_BRANCH to $CIRCLE_BRANCH inorder to switch okta cli back to non-prod aws account"
+            rm -r ~/.okta
+      - install-okta-aws-cli
 
   run-unit-tests-in-docker:
     description: Runs tests in docker container
