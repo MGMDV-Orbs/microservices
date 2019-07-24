@@ -91,7 +91,7 @@ commands:
             echo "export CIRCLE_BRANCH=prod" >> $BASH_ENV
             . $BASH_ENV
             echo "Manually set CIRCLE_BRANCH to $CIRCLE_BRANCH inorder to force-switch okta cli to production aws account"
-            rm -r ~/.okta
+            rm -rf ~/.okta
       - install-okta-aws-cli
       - run:
           name: Push Image to production ECR
