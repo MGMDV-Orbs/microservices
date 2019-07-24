@@ -80,6 +80,7 @@ commands:
           name: Push Image to ECR
           command: |
             make push-image-to-ecr
+
   push-built-image-to-prod-ecr:
     description: Publish docker image to production ECR
     steps:
@@ -523,6 +524,14 @@ jobs:
       - populate-okta-cli
       - attach-built-docker-image
       - push-built-image-to-ecr
+
+  push-image-prod:
+    executor: vpn/aws
+    steps:
+      - checkout
+      - populate-env-vars-into-job
+      - attach-built-docker-image
+      - push-built-image-to-prod-ecr
 
   # Step 3a: Verify that unit tests are passing
   run-unit-tests:
