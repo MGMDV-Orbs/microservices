@@ -84,29 +84,30 @@ commands:
   push-built-image-to-prod-ecr:
     description: Publish docker image to production ECR
     steps:
+      - install-okta-aws-cli
       - run:
           name: Switch to PRODUCTION aws account
           command: |
-            echo "export ORIGINAL_CIRCLE_BRANCH=$CIRCLE_BRANCH" >> $BASH_ENV
-            echo "export CIRCLE_BRANCH=prod" >> $BASH_ENV
-            . $BASH_ENV
-            echo "Manually set CIRCLE_BRANCH to $CIRCLE_BRANCH inorder to force-switch okta cli to production aws account"
-            rm -rf ~/.okta
-      - install-okta-aws-cli
+            rm -f ~/.okta/cookies.properties
+            rm -f ~/.okta/.current-session
+            rm -f ~/.okta/profiles
+
+            cat ~/.okta/config.properties | sed -i "s~OKTA_AWS_ROLE_TO_ASSUME=.*~OKTA_AWS_ROLE_TO_ASSUME=$OKTA_AWS_PROD_ROLE_TO_ASSUME~g"
+            java -jar ~/.okta/okta-aws-cli.jar sts get-caller-identity
       - run:
           name: Push Image to production ECR
           command: |
             echo "export ECR_APP_IMAGE_ORIGINAL=$ECR_APP_IMAGE" >> $BASH_ENV
             echo "export ECR_APP_IMAGE=$(aws sts get-caller-identity | jq -r '.Account').dkr.ecr.us-west-2.amazonaws.com/devices" >> $BASH_ENV
+            echo "Manually set ECR_APP_IMAGE to $ECR_APP_IMAGE_ORIGINAL for prod aws account access"
             . $BASH_ENV
             make build tag push-image-to-ecr
       - run:
           name: Reset CircleCI branch env var
           command: |
-            echo "export CIRCLE_BRANCH=$ORIGINAL_CIRCLE_BRANCH" >> $BASH_ENV
             echo "export ECR_APP_IMAGE=$ECR_APP_IMAGE_ORIGINAL" >> $BASH_ENV
             . $BASH_ENV
-            echo "Manually revert CIRCLE_BRANCH to $CIRCLE_BRANCH and ECR_APP_IMAGE to $ECR_APP_IMAGE_ORIGINAL inorder to switch okta cli back to non-prod aws account"
+            echo "Manually revert ECR_APP_IMAGE to $ECR_APP_IMAGE_ORIGINAL inorder to switch okta cli back to non-prod aws account"
             rm -r ~/.okta
       - install-okta-aws-cli
 
