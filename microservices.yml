@@ -48,7 +48,7 @@ commands:
           name: Populate environment variables from config
           command: |
             [ ! -e build-workspace/environment/config.json ] && mkdir -p build-workspace/environment ; cp environment/config.json build-workspace/environment/config.json || true
-            for s in $(cat build-workspace/environment/config.json | jq -r "to_entries|map(\"\(.key)=\(\"\\\"\"+.value|tostring+\"\\\"\")\")|.[]" ); do
+            for s in $(cat build-workspace/environment/config.json | jq -r "to_entries|map(\"\(.key)=\(\  "\\\"\"+.value|tostring+\"\\\"\")\")|.[]" ); do
               echo "export $s" >> $BASH_ENV
             done
       - run:
@@ -165,19 +165,8 @@ commands:
       - run:
           name: Populates secrets environment variables from SSM based on SSM_PATH_PREFIX in environment variables
           command: |
-            echo 'export SNT_CLIENT_ID=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/SNT/ClientCredentials/client_id" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
-            echo 'export SNT_CLIENT_SECRET=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/SNT/ClientCredentials/client_secret" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
-            echo 'export OKTA_TOKEN=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/okta/token" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
-            echo 'export AWS_GW_API_KEY=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Gateway/apikey" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
-            echo 'export CRED_SVC_USERNAME=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Cred_Svc/username" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
-            echo 'export CRED_SVC_PASSWORD=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Cred_Svc/password" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
-            echo 'export CRED_SVC_CALLBACK_USERNAME=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Cred_Svc/Callback/username" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
-            echo 'export CRED_SVC_CALLBACK_PASSWORD=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Cred_Svc/Callback/password" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
-            echo 'export WALLET_ID=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Dormakaba/wallet" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
-            echo 'export LEGIC_USERNAME=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Legic/username" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
-            echo 'export LEGIC_PASSWORD=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/Legic/password" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
-            echo 'export MGM_SSL_CERT=$(aws ssm get-parameters --name "$SSM_PATH_PREFIX/MGM_SSL_CERT" --with-decryption | jq .Parameters[0].Value | sed "s/\"//g")' >> $BASH_ENV
-
+            aws ssm get-parameters-by-path --path $SSM_PATH_PREFIX --recursive --with-decryption \
+              | jq -r '.Parameters|map( (.Name | sub("'$SSM_PATH_PREFIX'"; "")) + "=" + "\"" + .Value + "\"") | .[]' >> $BASH_ENV
   deploy:
     description: Deploy task definition in ECR to ECS Service
     steps:
