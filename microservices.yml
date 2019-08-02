@@ -40,7 +40,7 @@ commands:
             - environment
 
   populate-env-vars-into-job:
-    description: Populates the environment from JSON file in S3
+    description: Populates the environment from config in S3 and secrets in SSM
     steps:
       - attach_workspace:
           at: build-workspace
@@ -52,9 +52,9 @@ commands:
               echo "export $s" >> $BASH_ENV
             done
       - run:
-          name: Print environment variable configuration JSON fetched from S3
+          name: Populates secrets environment variables from SSM based on SSM_PATH_PREFIX in environment variables
           command: |
-            cat build-workspace/environment/config.json
+            cat build-workspace/secrets.json | jq -r '.Parameters|map( (.Name | sub("'$SSM_PATH_PREFIX'"; "")) + "=" + "\"" + .Value + "\"") | .[]' >> $BASH_ENV
 
   build-and-tag-docker-image:
     description: Builds the docker image and tags it with commit and branch
@@ -159,14 +159,18 @@ commands:
       - store_artifacts:
           path: ~/project/reports
 
-  populate-secret-ssm-env-vars:
+  fetch-secret-ssm-values:
     description:
     steps:
       - run:
-          name: Populates secrets environment variables from SSM based on SSM_PATH_PREFIX in environment variables
-          command: |
-            aws ssm get-parameters-by-path --path $SSM_PATH_PREFIX --recursive --with-decryption \
-              | jq -r '.Parameters|map( (.Name | sub("'$SSM_PATH_PREFIX'"; "")) + "=" + "\"" + .Value + "\"") | .[]' >> $BASH_ENV
+        name:
+        command: |
+          . $BASH_ENV
+          aws ssm get-parameters-by-path --path $SSM_PATH_PREFIX --recursive --with-decryption > secrets.json
+      - persist_to_workspace:
+          root: .
+          paths:
+            - secrets.json
   deploy:
     description: Deploy task definition in ECR to ECS Service
     steps:
@@ -495,6 +499,7 @@ jobs:
       - install-okta-aws-cli
       - fetch-environment-variables-from-s3
       - pull-test-configs-from-s3
+      - fetch-secret-ssm-values
       - print-diagnostics
 
   # Step 2: Build and tag docker image
@@ -572,7 +577,6 @@ jobs:
       - checkout
       - populate-env-vars-into-job
       - populate-okta-cli
-      - populate-secret-ssm-env-vars
       - deploy
 
   publish-swagger:
