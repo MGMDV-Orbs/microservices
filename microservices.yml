@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  vpn: mgmorbs/vpn@dev:use_ubuntu_1604
+  vpn: mgmorbs/vpn@1
 
 commands:
   print-diagnostics:
