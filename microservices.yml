@@ -163,10 +163,10 @@ commands:
     description:
     steps:
       - run:
-        name:
-        command: |
-          . $BASH_ENV
-          aws ssm get-parameters-by-path --path $SSM_PATH_PREFIX --recursive --with-decryption > secrets.json
+          name: Fetch all ssm secrets under env path
+          command: |
+            . $BASH_ENV
+            aws ssm get-parameters-by-path --path $SSM_PATH_PREFIX --recursive --with-decryption > secrets.json
       - persist_to_workspace:
           root: .
           paths:
