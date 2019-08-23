@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  vpn: mgmorbs/vpn@0.1.0
+  vpn: mgmorbs/vpn@1
 
 commands:
   print-diagnostics:
@@ -185,11 +185,10 @@ commands:
     description: Publish the API Open API spec (swagger doc) to S3 for API updates
     steps:
       - run:
-          name: Run documentation npm script
+          name: Run swagger.json creation
           command: |
             . $BASH_ENV
-            npm i
-            docker-compose up --build document
+            make swagger
       - run:
           name: publish to s3 bucket under $service/$semantic_tag.json pattern
           command: |
