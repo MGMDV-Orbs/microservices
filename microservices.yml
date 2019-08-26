@@ -48,7 +48,7 @@ commands:
           name: Populate environment variables from config
           command: |
             [ ! -e build-workspace/environment/config.json ] && mkdir -p build-workspace/environment ; cp environment/config.json build-workspace/environment/config.json || true
-            for s in $(cat build-workspace/environment/config.json | jq -r "to_entries|map(\"\(.key)=\(\  "\\\"\"+.value|tostring+\"\\\"\")\")|.[]" ); do
+            for s in $(cat build-workspace/environment/config.json | jq -r "to_entries|map(\"\(.key)=\(\"\\\"\"+.value|tostring+\"\\\"\")\")|.[]"  ); do
               echo "export $s" >> $BASH_ENV
             done
       - run:
