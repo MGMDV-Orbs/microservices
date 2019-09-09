@@ -54,7 +54,7 @@ commands:
       - run:
           name: Populates secrets environment variables from SSM based on SSM_PATH_PREFIX in environment variables
           command: |
-            cat build-workspace/secrets.json | jq -r '.Parameters|map( (.Name | sub("'$SSM_PATH_PREFIX/'"; "") | gsub("[/-]"; "_")) + "=" + "\"" + .Value + "\"") | .[]' >> $BASH_ENV
+            cat build-workspace/secrets.json | jq -r '.Parameters|map( (.Name | sub("'$SSM_PATH_PREFIX/'"; "export ") | gsub("[/-]"; "_")) + "=" + "\"" + .Value + "\"") | .[]' >> $BASH_ENV
 
   build-and-tag-docker-image:
     description: Builds the docker image and tags it with commit and branch
