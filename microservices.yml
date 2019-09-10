@@ -172,14 +172,31 @@ commands:
           root: .
           paths:
             - secrets.json
-  deploy:
-    description: Deploy task definition in ECR to ECS Service
+
+  deploy-to-nonprod:
+    description: Deploy task definition in ECR to ECS Service in qa4, uat, and preprod
     steps:
       - run:
           name: Deploy New Task Definition to ECS Cluster
           command: |
             . $BASH_ENV
-            make deploy
+            make deploy DEPLOY_ENV_NAME=qa4
+            make deploy DEPLOY_ENV_NAME=uat
+            make deploy DEPLOY_ENV_NAME=preprod
+
+  deploy-to-prod:
+    description: Deploy service to production
+    steps:
+      - run:
+          name: Deploy New Task Definition to ECS Cluster
+          command: |
+            export CIRCLE_BRANCH=prod
+      - set-aws-account-specific-resources
+      - run:
+          name: Deploy New Task Definition to ECS Cluster
+          command: |
+            . $BASH_ENV
+            make deploy DEPLOY_ENV_NAME=prod
 
   publish-swagger-to-s3-for-tag:
     description: Publish the API Open API spec (swagger doc) to S3 for API updates
@@ -578,6 +595,21 @@ jobs:
       - populate-env-vars-into-job
       - populate-okta-cli
       - deploy
+
+  nonprod-deploy:
+    executor: vpn/aws
+    steps:
+      - checkout
+      - set-aws-account-specific-resources
+      - populate-okta-cli
+      - deploy-to-nonprod
+
+ in qa4, uat, and preprod  prod-deploy:
+    executor: vpn/aws
+    steps:
+      - checkout
+      - populate-okta-cli
+      - deploy-to-prod
 
   publish-swagger:
     executor: vpn/aws
