@@ -76,29 +76,28 @@ workflows:
           filters:
             tags:
               only: /^v.*/
+      - ms/nonprod-deploy:
+          context: microservices-okta
+          requires:
+            - ms/push-image
+          filters: *ms-deployable-refs-filter
       - hold:
           type: approval
           requires:
             - ms/push-image
-          filters:
-            branches:
-              only:
-                - prod
+          filters: *ms-deployable-refs-filter
       - ms/change-management-event:
           context: microservices-okta
           requires:
             - hold
-          filters:
-            branches:
-              only:
-                - preprod
-                - /^prod-.*/
-      - ms/deploy-svc:
+          filters: *ms-deployable-refs-filter
+      - ms/prod-deploy:
           context: microservices-okta
           requires:
-            - hold
             - ms/push-image
+            - hold
             - ms/change-management-event
+          filters: *ms-deployable-refs-filter
       - ms/publish-aws-lambdas:
           context: microservices-okta
           requires:
