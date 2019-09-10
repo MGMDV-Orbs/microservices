@@ -604,7 +604,7 @@ jobs:
       - populate-okta-cli
       - deploy-to-nonprod
 
- in qa4, uat, and preprod  prod-deploy:
+  prod-deploy:
     executor: vpn/aws
     steps:
       - checkout
