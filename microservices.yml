@@ -82,16 +82,17 @@ commands:
             make push-image-to-ecr
 
   switch-okta-cli-to-prod:
-    - description: Switch the role to assume for okta cli to production
-    - run:
-        name: Switch to PRODUCTION aws account
-        command: |
-          rm -f ~/.okta/cookies.properties
-          rm -f ~/.okta/.current-session
-          rm -f ~/.okta/profiles
+    description: Switch the role to assume for okta cli to production
+    steps:
+      - run:
+          name: Switch to PRODUCTION aws account
+          command: |
+            rm -f ~/.okta/cookies.properties
+            rm -f ~/.okta/.current-session
+            rm -f ~/.okta/profiles
 
-          sed "s~OKTA_AWS_ROLE_TO_ASSUME=.*~OKTA_AWS_ROLE_TO_ASSUME=$OKTA_AWS_PROD_ROLE_TO_ASSUME~g" -i ~/.okta/config.properties
-          java -jar ~/.okta/okta-aws-cli.jar sts get-caller-identity
+            sed "s~OKTA_AWS_ROLE_TO_ASSUME=.*~OKTA_AWS_ROLE_TO_ASSUME=$OKTA_AWS_PROD_ROLE_TO_ASSUME~g" -i ~/.okta/config.properties
+            java -jar ~/.okta/okta-aws-cli.jar sts get-caller-identity
 
   push-built-image-to-prod-ecr:
     description: Publish docker image to production ECR
