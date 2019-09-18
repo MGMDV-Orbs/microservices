@@ -475,7 +475,6 @@ commands:
             echo "Test Type: $TEST_TYPE"
             echo "CIRCLE_SHA1 = $CIRCLE_SHA1"
             echo "Project Path: $SERVICE_DIR"
-            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/unit-test-mocha-results.xml SRV junit
             if ! test -f $TEST_RESULTS_FILE; then
               echo "mocha test results file not found ($TEST_RESULTS_FILE)"
               exit 1
@@ -518,7 +517,6 @@ commands:
             echo "Test Type: $TEST_TYPE"
             echo "CIRCLE_SHA1 = $CIRCLE_SHA1"
             echo "Project Path: $SERVICE_DIR"
-            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/integration-test-mocha-results.xml SRV junit
             if ! test -f $TEST_RESULTS_FILE; then
               echo "mocha test results file not found ($TEST_RESULTS_FILE)"
               exit 1
