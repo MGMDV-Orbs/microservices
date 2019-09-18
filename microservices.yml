@@ -462,7 +462,7 @@ commands:
              wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray-r2.3/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
       - run:
           name: Upload Mocha unit test results to Jira Xray
-          when: always
+          when: on_success
           command: |
             SERVICE_DIR=/home/circleci/project
             CIRCLE_SHA1=$(cd $SERVICE_DIR && git rev-parse HEAD)
