@@ -451,7 +451,7 @@ commands:
             # run dangerfile
             ./node_modules/.bin/danger ci --failOnErrors
 
-  publish-unit-test-results-to-xray:
+  publish-unit-test-results-via-xray:
     description: Publish all unit test results to Jira Xray
     steps:
       - run:
@@ -464,24 +464,35 @@ commands:
           name: Upload Mocha unit test results to Jira Xray
           when: always
           command: |
-            # run script to push results to Jira
+            SERVICE_DIR=/home/circleci/project
+            CIRCLE_SHA1=$(cd $SERVICE_DIR && git rev-parse HEAD)
+            TEST_RESULTS_FILE=./reports/unit-test-mocha-results.xml
+            PROJECT_CODE=SRV
+            TEST_TYPE=junit
+            echo "Push Xray Version 1.0.1"
+            echo "File to process: $TEST_RESULTS_FILE"
+            echo "Jira Project Name: $PROJECT_CODE"
+            echo "Test Type: $TEST_TYPE"
+            echo "CIRCLE_SHA1 = $CIRCLE_SHA1"
+            echo "Project Path: $SERVICE_DIR"
             bash /home/circleci/project/push-test-results-to-xray.sh ./reports/unit-test-mocha-results.xml SRV junit
-
-  publish-integration-test-results-to-xray:
-    description: Publish all integration test results to Jira Xray
-    steps:
-      - run:
-          name: Download publish to Xray script
-          when: always
-          command: |
-            # get push-test-results-to-xray.sh
-            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray-r2.3/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
-      - run:
-          name: Upload Mocha integration test results to Jira Xray
-          when: always
-          command: |
-            # run script to push results to Jira
-            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/integration-test-mocha-results.xml SRV junit
+            if ! test -f $TEST_RESULTS_FILE; then
+              echo "mocha test results file not found ($TEST_RESULTS_FILE)"
+              exit 1
+            fi
+            XRAY_AUTH_TOKEN=$(\
+              curl -s https://xray.cloud.xpand-it.com/api/v1/authenticate \
+                -H "Content-Type: application/json" -X POST \
+                --data "{ \"client_id\": \"$XRAY_CLIENT_ID\", \"client_secret\": \"$XRAY_CLIENT_SECRET\" }" \
+                | tr -d '"'
+            )
+            RESULTS_TEST=$(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/junit?projectKey=$PROJECT_CODE&revision=$CIRCLE_SHA1" \
+              -H "Content-Type: text/xml" \
+              -X POST \
+              -H "Authorization: Bearer $XRAY_AUTH_TOKEN" \
+              --data @"$TEST_RESULTS_FILE"
+            )
+            echo "UPLOAD RESULT = $RESULTS_TEST"
 
 jobs:
   publish-aws-lambdas:
@@ -557,7 +568,13 @@ jobs:
             - populate-env-vars-into-job
             - populate-test-configs-from-workspace
             - run-unit-tests-in-docker
-            - publish-unit-test-results-to-xray
+
+  publish-unit-test-results-to-xray:
+    executor: vpn/aws
+    steps:
+    - vpn/with-vpn-connection:
+          after-vpn-steps:
+            - publish-unit-test-results-via-xray
 
   # Step 3b: Verify that integration tests are passing
   run-integration-tests:
@@ -570,7 +587,6 @@ jobs:
             - populate-env-vars-into-job
             - populate-test-configs-from-workspace
             - run-integration-tests-in-docker
-            - publish-integration-test-results-to-xray
 
   # Step 3c: Verify that lint is passing
   run-lint:
