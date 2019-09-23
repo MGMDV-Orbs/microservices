@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  vpn: mgmorbs/vpn@1
+  vpn: mgmorbs/vpn@dev:poc_fix_circle
 
 commands:
   print-diagnostics:
