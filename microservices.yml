@@ -663,11 +663,9 @@ jobs:
             - run-unit-tests-in-docker
 
   publish-unit-test-results-to-xray:
-    executor: vpn/aws
     steps:
-    - vpn/with-vpn-connection:
-          after-vpn-steps:
-            - publish-unit-test-results-via-xray
+      - checkout
+      - publish-unit-test-results-via-xray
 
   # Step 3b: Verify that integration tests are passing
   run-integration-tests:
@@ -682,11 +680,9 @@ jobs:
             - run-integration-tests-in-docker
 
   publish-integration-test-results-to-xray:
-    executor: vpn/aws
     steps:
-    - vpn/with-vpn-connection:
-          after-vpn-steps:
-            - publish-integration-test-results-via-xray
+      - checkout
+      - publish-integration-test-results-via-xray
 
   # Step 3c: Verify that lint is passing
   run-lint:
