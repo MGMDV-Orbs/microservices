@@ -492,9 +492,9 @@ commands:
           command: |
             SERVICE_DIR=/home/circleci/project
             CIRCLE_SHA1=$(cd $SERVICE_DIR && git rev-parse HEAD)
-            TEST_RESULTS_FILE=./reports/unit-tests-output.xml
+            TEST_RESULTS_FILE=./reports/unit-test-results.json
             PROJECT_CODE=SRV
-            TEST_TYPE=junit
+            TEST_TYPE=cucumber
             echo "Push Xray Version 1.0.1"
             echo "File to process: $TEST_RESULTS_FILE"
             echo "Jira Project Name: $PROJECT_CODE"
@@ -511,7 +511,7 @@ commands:
                 --data "{ \"client_id\": \"$XRAY_CLIENT_ID\", \"client_secret\": \"$XRAY_CLIENT_SECRET\" }" \
                 | tr -d '"'
             )
-            RESULTS_TEST=$(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/junit?projectKey=$PROJECT_CODE&revision=$CIRCLE_SHA1" \
+            RESULTS_TEST=$(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/cucumber" \
               -H "Content-Type: text/xml" \
               -X POST \
               -H "Authorization: Bearer $XRAY_AUTH_TOKEN" \
@@ -560,9 +560,9 @@ commands:
           command: |
             SERVICE_DIR=/home/circleci/project
             CIRCLE_SHA1=$(cd $SERVICE_DIR && git rev-parse HEAD)
-            TEST_RESULTS_FILE=./reports/integration-tests-output.xml
+            TEST_RESULTS_FILE=./reports/integration-test-results.json
             PROJECT_CODE=SRV
-            TEST_TYPE=junit
+            TEST_TYPE=cucumber
             echo "Push Xray Version 1.0.1"
             echo "File to process: $TEST_RESULTS_FILE"
             echo "Jira Project Name: $PROJECT_CODE"
@@ -579,7 +579,7 @@ commands:
                 --data "{ \"client_id\": \"$XRAY_CLIENT_ID\", \"client_secret\": \"$XRAY_CLIENT_SECRET\" }" \
                 | tr -d '"'
             )
-            RESULTS_TEST=$(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/junit?projectKey=$PROJECT_CODE&revision=$CIRCLE_SHA1" \
+            RESULTS_TEST=$(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/cucumber" \
               -H "Content-Type: text/xml" \
               -X POST \
               -H "Authorization: Bearer $XRAY_AUTH_TOKEN" \
