@@ -115,7 +115,7 @@ commands:
     description: Runs tests in docker container
     steps:
       - attach_workspace:
-          path: ./reports
+          at: /home/circleci/project/reports
       - run:
           name: Run unit tests in docker container
           command: |
@@ -131,7 +131,7 @@ commands:
       - store_artifacts:
           path: ./reports
       - persist_to_workspace:
-          root: /home/circleci/project
+          root: .
           paths:
             - reports
 
@@ -139,7 +139,7 @@ commands:
     description: Runs integration tests in docker container
     steps:
       - attach_workspace:
-          path: ./reports
+          at: /home/circleci/project/reports
       - run:
           name: Run integration tests in docker container
           command: |
@@ -155,7 +155,7 @@ commands:
       - store_artifacts:
           path: ./reports
       - persist_to_workspace:
-          root: /home/circleci/project
+          root: .
           paths:
             - reports
 
