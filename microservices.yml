@@ -464,6 +464,8 @@ commands:
   publish-unit-test-results-via-xray:
     description: Publish all unit test results to Jira Xray
     steps:
+      - attach_workspace:
+          at: .
       - run:
           name: Upload Mocha unit test results to Jira Xray
           when: always
@@ -523,6 +525,8 @@ commands:
   publish-integration-test-results-via-xray:
     description: Publish all integration test results to Jira Xray
     steps:
+      - attach_workspace:
+          at: .
       - run:
           name: Upload Mocha integration test results to Jira Xray
           when: always
