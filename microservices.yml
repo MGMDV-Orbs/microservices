@@ -131,7 +131,8 @@ commands:
       - persist_to_workspace:
           root: .
           paths:
-            - reports
+            - reports/unit-tests-output.xml
+            - reports/unit-test-results.json
 
   run-integration-tests-in-docker:
     description: Runs integration tests in docker container
@@ -153,7 +154,8 @@ commands:
       - persist_to_workspace:
           root: .
           paths:
-            - reports
+            - reports/integration-tests-output.xml
+            - reports/integration-test-results.json
 
   run-lint:
     description: Runs lint
