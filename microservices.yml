@@ -513,7 +513,7 @@ commands:
                 | tr -d '"'
             )
             RESULTS_TEST=$(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/cucumber" \
-              -H "Content-Type: text/xml" \
+              -H "Content-Type: application/json" \
               -X POST \
               -H "Authorization: Bearer $XRAY_AUTH_TOKEN" \
               --data @"$TEST_RESULTS_FILE"
@@ -574,7 +574,7 @@ commands:
                 | tr -d '"'
             )
             RESULTS_TEST=$(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/cucumber" \
-              -H "Content-Type: text/xml" \
+              -H "Content-Type: application/json" \
               -X POST \
               -H "Authorization: Bearer $XRAY_AUTH_TOKEN" \
               --data @"$TEST_RESULTS_FILE"
