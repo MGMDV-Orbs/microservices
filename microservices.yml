@@ -131,7 +131,7 @@ commands:
       - persist_to_workspace:
           root: .
           paths:
-            - reports/unit-tests-output.xml
+            - reports/unit-test-mocha-results.xml
             - reports/unit-test-results.json
 
   run-integration-tests-in-docker:
@@ -154,7 +154,7 @@ commands:
       - persist_to_workspace:
           root: .
           paths:
-            - reports/integration-tests-output.xml
+            - reports/integration-test-mocha-results.xml
             - reports/integration-test-results.json
 
   run-lint:
@@ -464,8 +464,6 @@ commands:
   publish-unit-test-results-via-xray:
     description: Publish all unit test results to Jira Xray
     steps:
-      - attach_workspace:
-          at: .
       - run:
           name: Upload Mocha unit test results to Jira Xray
           when: always
@@ -525,8 +523,6 @@ commands:
   publish-integration-test-results-via-xray:
     description: Publish all integration test results to Jira Xray
     steps:
-      - attach_workspace:
-          at: .
       - run:
           name: Upload Mocha integration test results to Jira Xray
           when: always
