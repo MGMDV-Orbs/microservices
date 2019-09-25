@@ -114,6 +114,8 @@ commands:
   run-unit-tests-in-docker:
     description: Runs tests in docker container
     steps:
+      - attach_workspace:
+          path: ./reports
       - run:
           name: Run unit tests in docker container
           command: |
@@ -128,10 +130,16 @@ commands:
           path: ./reports
       - store_artifacts:
           path: ./reports
+      - persist_to_workspace:
+          root: /home/circleci/project
+          paths:
+            - reports
 
   run-integration-tests-in-docker:
     description: Runs integration tests in docker container
     steps:
+      - attach_workspace:
+          path: ./reports
       - run:
           name: Run integration tests in docker container
           command: |
@@ -146,6 +154,10 @@ commands:
           path: ./reports
       - store_artifacts:
           path: ./reports
+      - persist_to_workspace:
+          root: /home/circleci/project
+          paths:
+            - reports
 
   run-lint:
     description: Runs lint
