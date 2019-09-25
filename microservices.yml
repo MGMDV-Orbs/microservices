@@ -458,8 +458,6 @@ commands:
           name: Upload Mocha unit test results to Jira Xray
           when: always
           command: |
-            SERVICE_DIR=/home/circleci/project
-            CIRCLE_SHA1=$(cd $SERVICE_DIR && git rev-parse HEAD)
             TEST_RESULTS_FILE=./reports/unit-test-mocha-results.xml
             PROJECT_CODE=SRV
             TEST_TYPE=junit
@@ -468,7 +466,6 @@ commands:
             echo "Jira Project Name: $PROJECT_CODE"
             echo "Test Type: $TEST_TYPE"
             echo "CIRCLE_SHA1 = $CIRCLE_SHA1"
-            echo "Project Path: $SERVICE_DIR"
             if ! test -f $TEST_RESULTS_FILE; then
               echo "mocha test results file not found ($TEST_RESULTS_FILE)"
               exit 1
@@ -490,16 +487,11 @@ commands:
           name: Upload Cucumber unit test results to Jira Xray
           when: always
           command: |
-            SERVICE_DIR=/home/circleci/project
             TEST_RESULTS_FILE=./reports/unit-test-results.json
-            PROJECT_CODE=SRV
             TEST_TYPE=cucumber
             echo "Push Xray Version 1.0.1"
             echo "File to process: $TEST_RESULTS_FILE"
-            echo "Jira Project Name: $PROJECT_CODE"
             echo "Test Type: $TEST_TYPE"
-            echo "CIRCLE_SHA1 = $CIRCLE_SHA1"
-            echo "Project Path: $SERVICE_DIR"
             if ! test -f $TEST_RESULTS_FILE; then
               echo "cucumber test results file not found ($TEST_RESULTS_FILE)"
               exit 1
@@ -525,8 +517,6 @@ commands:
           name: Upload Mocha integration test results to Jira Xray
           when: always
           command: |
-            SERVICE_DIR=/home/circleci/project
-            CIRCLE_SHA1=$(cd $SERVICE_DIR && git rev-parse HEAD)
             TEST_RESULTS_FILE=./reports/integration-test-mocha-results.xml
             PROJECT_CODE=SRV
             TEST_TYPE=junit
@@ -535,7 +525,6 @@ commands:
             echo "Jira Project Name: $PROJECT_CODE"
             echo "Test Type: $TEST_TYPE"
             echo "CIRCLE_SHA1 = $CIRCLE_SHA1"
-            echo "Project Path: $SERVICE_DIR"
             if ! test -f $TEST_RESULTS_FILE; then
               echo "mocha test results file not found ($TEST_RESULTS_FILE)"
               exit 1
@@ -557,16 +546,11 @@ commands:
           name: Upload Cucumber integration test results to Jira Xray
           when: always
           command: |
-            SERVICE_DIR=/home/circleci/project
             TEST_RESULTS_FILE=./reports/integration-test-results.json
-            PROJECT_CODE=SRV
             TEST_TYPE=cucumber
             echo "Push Xray Version 1.0.1"
             echo "File to process: $TEST_RESULTS_FILE"
-            echo "Jira Project Name: $PROJECT_CODE"
             echo "Test Type: $TEST_TYPE"
-            echo "CIRCLE_SHA1 = $CIRCLE_SHA1"
-            echo "Project Path: $SERVICE_DIR"
             if ! test -f $TEST_RESULTS_FILE; then
               echo "cucumber test results file not found ($TEST_RESULTS_FILE)"
               exit 1
