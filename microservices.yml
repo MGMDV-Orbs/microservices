@@ -114,8 +114,6 @@ commands:
   run-unit-tests-in-docker:
     description: Runs tests in docker container
     steps:
-      - attach_workspace:
-          at: /home/circleci/project/reports
       - run:
           name: Run unit tests in docker container
           command: |
@@ -138,8 +136,6 @@ commands:
   run-integration-tests-in-docker:
     description: Runs integration tests in docker container
     steps:
-      - attach_workspace:
-          at: /home/circleci/project/reports
       - run:
           name: Run integration tests in docker container
           command: |
