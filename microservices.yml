@@ -664,7 +664,6 @@ jobs:
 
   publish-unit-test-results-to-xray:
     steps:
-      - checkout
       - publish-unit-test-results-via-xray
 
   # Step 3b: Verify that integration tests are passing
@@ -681,7 +680,6 @@ jobs:
 
   publish-integration-test-results-to-xray:
     steps:
-      - checkout
       - publish-integration-test-results-via-xray
 
   # Step 3c: Verify that lint is passing
