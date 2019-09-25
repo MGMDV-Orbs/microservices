@@ -491,7 +491,6 @@ commands:
           when: always
           command: |
             SERVICE_DIR=/home/circleci/project
-            CIRCLE_SHA1=$(cd $SERVICE_DIR && git rev-parse HEAD)
             TEST_RESULTS_FILE=./reports/unit-test-results.json
             PROJECT_CODE=SRV
             TEST_TYPE=cucumber
@@ -559,7 +558,6 @@ commands:
           when: always
           command: |
             SERVICE_DIR=/home/circleci/project
-            CIRCLE_SHA1=$(cd $SERVICE_DIR && git rev-parse HEAD)
             TEST_RESULTS_FILE=./reports/integration-test-results.json
             PROJECT_CODE=SRV
             TEST_TYPE=cucumber
