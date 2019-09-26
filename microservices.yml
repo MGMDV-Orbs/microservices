@@ -128,6 +128,11 @@ commands:
           path: ./reports
       - store_artifacts:
           path: ./reports
+      - persist_to_workspace:
+          root: .
+          paths:
+            - reports/unit-test-mocha-results.xml
+            - reports/unit-test-results.json
 
   run-integration-tests-in-docker:
     description: Runs integration tests in docker container
@@ -146,6 +151,11 @@ commands:
           path: ./reports
       - store_artifacts:
           path: ./reports
+      - persist_to_workspace:
+          root: .
+          paths:
+            - reports/integration-test-mocha-results.xml
+            - reports/integration-test-results.json
 
   run-lint:
     description: Runs lint
