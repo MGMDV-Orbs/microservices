@@ -471,7 +471,6 @@ commands:
           when: always
           command: |
             TEST_RESULTS_FILE=./reports/unit-test-mocha-results.xml
-            PROJECT_CODE=SRV
             echo "Push Xray Version 1.0.1"
             echo "File to process: $TEST_RESULTS_FILE"
             echo "CIRCLE_SHA1 = $CIRCLE_SHA1"
@@ -485,7 +484,7 @@ commands:
                 --data "{ \"client_id\": \"$XRAY_CLIENT_ID\", \"client_secret\": \"$XRAY_CLIENT_SECRET\" }" \
                 | tr -d '"'
             )
-            echo "UPLOAD_RESULT = $(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/junit?projectKey=$PROJECT_CODE&revision=$CIRCLE_SHA1" \
+            echo "UPLOAD_RESULT = $(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/junit?projectKey=SRV&revision=$CIRCLE_SHA1" \
               -H "Content-Type: text/xml" \
               -X POST \
               -H "Authorization: Bearer $XRAY_AUTH_TOKEN" \
@@ -526,7 +525,6 @@ commands:
           when: always
           command: |
             TEST_RESULTS_FILE=./reports/integration-test-mocha-results.xml
-            PROJECT_CODE=SRV
             echo "Push Xray Version 1.0.1"
             echo "File to process: $TEST_RESULTS_FILE"
             echo "CIRCLE_SHA1 = $CIRCLE_SHA1"
@@ -540,7 +538,7 @@ commands:
                 --data "{ \"client_id\": \"$XRAY_CLIENT_ID\", \"client_secret\": \"$XRAY_CLIENT_SECRET\" }" \
                 | tr -d '"'
             )
-            echo "UPLOAD_RESULT = $(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/junit?projectKey=$PROJECT_CODE&revision=$CIRCLE_SHA1" \
+            echo "UPLOAD_RESULT = $(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/junit?projectKey=SRV&revision=$CIRCLE_SHA1" \
               -H "Content-Type: text/xml" \
               -X POST \
               -H "Authorization: Bearer $XRAY_AUTH_TOKEN" \
