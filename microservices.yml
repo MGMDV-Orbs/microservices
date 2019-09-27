@@ -81,10 +81,9 @@ commands:
           command: |
             make push-image-to-ecr
 
-  push-built-image-to-prod-ecr:
-    description: Publish docker image to production ECR
+  switch-okta-cli-to-prod:
+    description: Switch the role to assume for okta cli to production
     steps:
-      - install-okta-aws-cli
       - run:
           name: Switch to PRODUCTION aws account
           command: |
@@ -94,6 +93,12 @@ commands:
 
             sed "s~OKTA_AWS_ROLE_TO_ASSUME=.*~OKTA_AWS_ROLE_TO_ASSUME=$OKTA_AWS_PROD_ROLE_TO_ASSUME~g" -i ~/.okta/config.properties
             java -jar ~/.okta/okta-aws-cli.jar sts get-caller-identity
+
+  push-built-image-to-prod-ecr:
+    description: Publish docker image to production ECR
+    steps:
+      - install-okta-aws-cli
+      - switch-okta-cli-to-prod
       - run:
           name: Push Image to production ECR
           command: |
@@ -202,6 +207,8 @@ commands:
           command: |
             export CIRCLE_BRANCH=prod
       - set-aws-account-specific-resources
+      - populate-okta-cli
+      - switch-okta-cli-to-prod
       - run:
           name: Deploy New Task Definition to ECS Cluster
           command: |
@@ -701,7 +708,6 @@ jobs:
     executor: vpn/aws
     steps:
       - checkout
-      - populate-okta-cli
       - deploy-to-prod
 
   publish-swagger:
