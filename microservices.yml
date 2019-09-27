@@ -642,7 +642,11 @@ jobs:
             - populate-env-vars-into-job
             - populate-test-configs-from-workspace
             - run-unit-tests-in-docker
-            - publish-unit-test-results-to-xray
+            
+  publish-unit-test-results-to-xray:
+    executor: vpn/aws
+    steps:
+    - publish-unit-test-results-via-xray
 
   # Step 3b: Verify that integration tests are passing
   run-integration-tests:
@@ -655,7 +659,11 @@ jobs:
             - populate-env-vars-into-job
             - populate-test-configs-from-workspace
             - run-integration-tests-in-docker
-            - publish-integration-test-results-to-xray
+  
+  publish-integration-test-results-to-xray:
+    executor: vpn/aws
+    steps:
+    - publish-integration-test-results-via-xray
 
   # Step 3c: Verify that lint is passing
   run-lint:
