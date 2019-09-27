@@ -562,7 +562,7 @@ commands:
               echo "cucumber test results file not found ($TEST_RESULTS_FILE)"
               exit 1
             fi
-            if (cat $TEST_RESULTS_FILE)[@] -eq 0; then
+            if [ ${#(cat $TEST_RESULTS_FILE)[@]} -eq 0 ]; then
               echo "no cucumber test results were found (no tests executed)"
             fi
             XRAY_AUTH_TOKEN=$(\
