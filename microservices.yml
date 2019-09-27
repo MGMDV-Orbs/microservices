@@ -461,23 +461,62 @@ commands:
             # run dangerfile
             ./node_modules/.bin/danger ci --failOnErrors
 
-  publish-unit-test-results-to-xray:
+  publish-unit-test-results-via-xray:
     description: Publish all unit test results to Jira Xray
     steps:
-      - run:
-          name: Download publish to Xray script
-          when: always
-          command: |
-            # get push-test-results-to-xray.sh
-             wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/xray-r2.3/.circleci/push-test-results-to-xray.sh -O push-test-results-to-xray.sh
+      - attach_workspace:
+            at: .
       - run:
           name: Upload Mocha unit test results to Jira Xray
           when: always
           command: |
-            # run script to push results to Jira
-            bash /home/circleci/project/push-test-results-to-xray.sh ./reports/unit-test-mocha-results.xml SRV junit
+            TEST_RESULTS_FILE=./reports/unit-test-mocha-results.xml
+            PROJECT_CODE=SRV
+            echo "Push Xray Version 1.0.1"
+            echo "File to process: $TEST_RESULTS_FILE"
+            echo "CIRCLE_SHA1 = $CIRCLE_SHA1"
+            if ! test -f $TEST_RESULTS_FILE; then
+              echo "mocha test results file not found ($TEST_RESULTS_FILE)"
+              exit 1
+            fi
+            XRAY_AUTH_TOKEN=$(\
+              curl -s https://xray.cloud.xpand-it.com/api/v1/authenticate \
+                -H "Content-Type: application/json" -X POST \
+                --data "{ \"client_id\": \"$XRAY_CLIENT_ID\", \"client_secret\": \"$XRAY_CLIENT_SECRET\" }" \
+                | tr -d '"'
+            )
+            echo "UPLOAD_RESULT = $(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/junit?projectKey=$PROJECT_CODE&revision=$CIRCLE_SHA1" \
+              -H "Content-Type: text/xml" \
+              -X POST \
+              -H "Authorization: Bearer $XRAY_AUTH_TOKEN" \
+              --data @"$TEST_RESULTS_FILE"
+            )"
+      - run:
+          name: Upload Cucumber unit test results to Jira Xray
+          when: always
+          command: |
+            TEST_RESULTS_FILE=./reports/unit-test-results.json
+            echo "Push Xray Version 1.0.1"
+            echo "File to process: $TEST_RESULTS_FILE"
+            if ! test -f $TEST_RESULTS_FILE; then
+              echo "cucumber test results file not found ($TEST_RESULTS_FILE)"
+              exit 1
+            fi
+            XRAY_AUTH_TOKEN=$(\
+              curl -s https://xray.cloud.xpand-it.com/api/v1/authenticate \
+                -H "Content-Type: application/json" -X POST \
+                --data "{ \"client_id\": \"$XRAY_CLIENT_ID\", \"client_secret\": \"$XRAY_CLIENT_SECRET\" }" \
+                | tr -d '"'
+            )
+            echo "UPLOAD_RESULT = $(\curl "https://xray.cloud.xpand-it.com/api/v1/import/execution/cucumber" \
+              -H "Content-Type: application/json" \
+                -X POST \
+                -H "Authorization: Bearer $XRAY_AUTH_TOKEN" \
+                --data @"$TEST_RESULTS_FILE"
+              )"
 
-  publish-integration-test-results-to-xray:
+
+  publish-integration-test-results-via-xray:
     description: Publish all integration test results to Jira Xray
     steps:
       - run:
