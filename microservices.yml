@@ -106,7 +106,7 @@ commands:
             echo "export ECR_APP_IMAGE=$(aws sts get-caller-identity | jq -r '.Account').dkr.ecr.us-west-2.amazonaws.com/$SERVICE" >> $BASH_ENV
             echo "Manually set ECR_APP_IMAGE to $ECR_APP_IMAGE_ORIGINAL for prod aws account access"
             . $BASH_ENV
-            make build tag push-image-to-ecr
+            make build tag push-image-to-prod-ecr
       - run:
           name: Reset CircleCI branch env var
           command: |
