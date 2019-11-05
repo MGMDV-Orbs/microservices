@@ -461,7 +461,7 @@ commands:
             npm i danger danger-plugin-complete-pr axios @azure/event-hubs
 
             # get dangerfile
-            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/SRV-390/dangerfile.js -O dangerfile.js
+            wget https://raw.githubusercontent.com/MGMDV-Orbs/microservices/f/srv-390/dangerfile.js -O dangerfile.js
       - run:
           name: Run danger for Prod PR to validate required change-request fields and send event to Azure
           command: |
