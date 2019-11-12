@@ -472,7 +472,7 @@ commands:
     description: Publish all unit test results to Jira Xray
     steps:
       - attach_workspace:
-            at: .
+          at: .
       - run:
           name: Upload Mocha unit test results to Jira Xray
           when: always
@@ -520,7 +520,6 @@ commands:
                 -H "Authorization: Bearer $XRAY_AUTH_TOKEN" \
                 --data @"$TEST_RESULTS_FILE"
               )"
-
 
   publish-integration-test-results-via-xray:
     description: Publish all integration test results to Jira Xray
@@ -597,7 +596,7 @@ jobs:
           command: sudo npm i -g audit-ci
       - run:
           name: Run audit-ci
-          command: audit-ci --critical
+          command: NPM_TOKEN=$(GITHUB_PACKAGES_TOKEN) audit-ci --critical
 
   # Step 1: Fetch environment configuration for this branch
   # and print diagnostic info
@@ -649,11 +648,11 @@ jobs:
             - populate-env-vars-into-job
             - populate-test-configs-from-workspace
             - run-unit-tests-in-docker
-            
+
   publish-unit-test-results-to-xray:
     executor: vpn/aws
     steps:
-    - publish-unit-test-results-via-xray
+      - publish-unit-test-results-via-xray
 
   # Step 3b: Verify that integration tests are passing
   run-integration-tests:
@@ -666,11 +665,11 @@ jobs:
             - populate-env-vars-into-job
             - populate-test-configs-from-workspace
             - run-integration-tests-in-docker
-  
+
   publish-integration-test-results-to-xray:
     executor: vpn/aws
     steps:
-    - publish-integration-test-results-via-xray
+      - publish-integration-test-results-via-xray
 
   # Step 3c: Verify that lint is passing
   run-lint:
