@@ -335,7 +335,7 @@ commands:
       - run:
           name: Set static AWS resource names based on AWS account
           command: |
-            . $BASH_ENV
+            . $BASH_ENV || echo 'ok'
             case "$CIRCLE_BRANCH" in
             "prod")
                 echo "Using prod resources"
