@@ -205,7 +205,7 @@ commands:
       - run:
           name: Deploy New Task Definition to ECS Cluster
           command: |
-            export CIRCLE_BRANCH=prod
+            echo "export CIRCLE_BRANCH=prod" >> $BASH_ENV
       - set-aws-account-specific-resources
       - populate-okta-cli
       - switch-okta-cli-to-prod
@@ -213,7 +213,7 @@ commands:
           name: Deploy New Task Definition to ECS Cluster
           command: |
             . $BASH_ENV
-            make deploy DEPLOY_ENV_NAME=prod
+            DEPLOY_ENV_NAME=prod make deploy
 
   publish-swagger-to-s3-for-tag:
     description: Publish the API Open API spec (swagger doc) to S3 for API updates
@@ -335,6 +335,7 @@ commands:
       - run:
           name: Set static AWS resource names based on AWS account
           command: |
+            . $BASH_ENV
             case "$CIRCLE_BRANCH" in
             "prod")
                 echo "Using prod resources"
