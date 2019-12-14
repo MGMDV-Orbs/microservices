@@ -586,6 +586,18 @@ jobs:
       - populate-env-vars-into-job
       - setup-each-lambda-env
       - publish-each-lambda
+ 
+  publish-prod-aws-lambdas:
+    executor: vpn/aws
+    steps:
+      - install-terraform-and-npm
+      - set-aws-account-specific-resources
+      - checkout
+      - populate-okta-cli
+      - switch-okta-cli-to-prod
+      - populate-env-vars-into-job
+      - setup-each-lambda-env
+      - publish-each-lambda
 
   npm-audit:
     docker:
