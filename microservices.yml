@@ -198,14 +198,19 @@ commands:
             make deploy DEPLOY_ENV_NAME=qa4
             make deploy DEPLOY_ENV_NAME=uat
             make deploy DEPLOY_ENV_NAME=preprod
+  
+  set-prod-circle-branch:
+    description: Set CIRCLE_BRANCH var to prod and export to bash
+    steps:
+      - run:
+          name: Set CIRCLE_BRANCH to prod
+          command: |
+            echo "export CIRCLE_BRANCH=prod" >> $BASH_ENV
 
   deploy-to-prod:
     description: Deploy service to production
     steps:
-      - run:
-          name: Deploy New Task Definition to ECS Cluster
-          command: |
-            echo "export CIRCLE_BRANCH=prod" >> $BASH_ENV
+      - set-prod-circle-branch
       - set-aws-account-specific-resources
       - populate-okta-cli
       - switch-okta-cli-to-prod
@@ -591,6 +596,7 @@ jobs:
     executor: vpn/aws
     steps:
       - install-terraform-and-npm
+      - set-prod-circle-branch
       - set-aws-account-specific-resources
       - checkout
       - populate-okta-cli
