@@ -469,16 +469,6 @@ commands:
             terraform state pull > ~/project/tf-states-artifacts/$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM.json
             cat ~/project/tf-states-artifacts/$CIRCLE_PROJECT_REPONAME-$CIRCLE_BUILD_NUM.json | jq
 
-  prepare-each-lambda:
-    description: Prepare each lambda
-    steps:
-      - run:
-          name: Publish any lambda changes to aws
-          command: |
-            cd faas
-            time terraform init -input=false
-            time terraform plan -input=false
-
   prod-change-management-event:
     description: Trigger an event to be published to change management system of record in Azure
     steps:
@@ -625,7 +615,7 @@ jobs:
       - switch-okta-cli-to-prod
       - populate-env-vars-into-job
       - setup-each-lambda-env
-      - prepare-each-lambda
+      - publish-each-lambda
 
   publish-prod-auth-lambdas:
     executor: vpn/aws
