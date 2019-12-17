@@ -39,6 +39,18 @@ commands:
           paths:
             - environment
 
+  fetch-prod-auth-lambda-vars-from-s3:
+    description: Fetches environment variables for ${service-name}/prod.json
+    steps:
+      - run:
+          name: Fetch JSON from S3 bucket and place in ./environment/config.json workspace
+          command: |
+            aws s3 cp "s3://$SVC_CONFIG_S3_BUCKET/$CIRCLE_PROJECT_REPONAME/prod.json" ./environment/config.json
+      - persist_to_workspace:
+          root: .
+          paths:
+            - environment
+
   populate-env-vars-into-job:
     description: Populates the environment from config in S3 and secrets in SSM
     steps:
@@ -621,7 +633,7 @@ jobs:
       - install-terraform-and-npm
       - set-prod-circle-branch
       - set-aws-account-specific-resources
-      - fetch-environment-variables-from-s3
+      - fetch-prod-auth-lambda-vars-from-s3
       - checkout
       - populate-okta-cli
       - switch-okta-cli-to-prod
