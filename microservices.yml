@@ -625,7 +625,7 @@ jobs:
       - switch-okta-cli-to-prod
       - populate-env-vars-into-job
       - setup-each-lambda-env
-      - prepare-each-lambda
+      - publish-each-lambda
 
   publish-prod-auth-lambdas:
     executor: vpn/aws
