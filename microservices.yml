@@ -633,10 +633,10 @@ jobs:
       - install-terraform-and-npm
       - set-prod-circle-branch
       - set-aws-account-specific-resources
-      - fetch-prod-auth-lambda-vars-from-s3
       - checkout
       - populate-okta-cli
       - switch-okta-cli-to-prod
+      - fetch-prod-auth-lambda-vars-from-s3
       - populate-env-vars-into-job
       - setup-each-lambda-env
       - prepare-each-lambda
