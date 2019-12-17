@@ -639,7 +639,7 @@ jobs:
       - fetch-prod-auth-lambda-vars-from-s3
       - populate-env-vars-into-job
       - setup-each-lambda-env
-      - prepare-each-lambda
+      - publish-each-lambda
 
   npm-audit:
     docker:
