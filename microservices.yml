@@ -615,6 +615,20 @@ jobs:
       - setup-each-lambda-env
       - prepare-each-lambda
 
+  publish-prod-auth-lambdas:
+    executor: vpn/aws
+    steps:
+      - install-terraform-and-npm
+      - set-prod-circle-branch
+      - set-aws-account-specific-resources
+      - fetch-environment-variables-from-s3
+      - checkout
+      - populate-okta-cli
+      - switch-okta-cli-to-prod
+      - populate-env-vars-into-job
+      - setup-each-lambda-env
+      - prepare-each-lambda
+
   npm-audit:
     docker:
       - image: circleci/node:8
