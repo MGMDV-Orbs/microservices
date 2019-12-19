@@ -39,6 +39,18 @@ commands:
           paths:
             - environment
 
+  fetch-prod-auth-lambda-vars-from-s3:
+    description: Fetches environment variables for ${service-name}/prod.json
+    steps:
+      - run:
+          name: Fetch JSON from S3 bucket and place in ./environment/config.json workspace
+          command: |
+            aws s3 cp "s3://$SVC_CONFIG_S3_BUCKET/$CIRCLE_PROJECT_REPONAME/prod.json" ./environment/config.json
+      - persist_to_workspace:
+          root: .
+          paths:
+            - environment
+
   populate-env-vars-into-job:
     description: Populates the environment from config in S3 and secrets in SSM
     steps:
@@ -198,14 +210,19 @@ commands:
             make deploy DEPLOY_ENV_NAME=qa4
             make deploy DEPLOY_ENV_NAME=uat
             make deploy DEPLOY_ENV_NAME=preprod
+  
+  set-prod-circle-branch:
+    description: Set CIRCLE_BRANCH var to prod and export to bash
+    steps:
+      - run:
+          name: Set CIRCLE_BRANCH to prod
+          command: |
+            echo "export CIRCLE_BRANCH=prod" >> $BASH_ENV
 
   deploy-to-prod:
     description: Deploy service to production
     steps:
-      - run:
-          name: Deploy New Task Definition to ECS Cluster
-          command: |
-            echo "export CIRCLE_BRANCH=prod" >> $BASH_ENV
+      - set-prod-circle-branch
       - set-aws-account-specific-resources
       - populate-okta-cli
       - switch-okta-cli-to-prod
@@ -583,6 +600,33 @@ jobs:
       - set-aws-account-specific-resources
       - checkout
       - populate-okta-cli
+      - populate-env-vars-into-job
+      - setup-each-lambda-env
+      - publish-each-lambda
+ 
+  publish-prod-aws-lambdas:
+    executor: vpn/aws
+    steps:
+      - install-terraform-and-npm
+      - set-prod-circle-branch
+      - set-aws-account-specific-resources
+      - checkout
+      - populate-okta-cli
+      - switch-okta-cli-to-prod
+      - populate-env-vars-into-job
+      - setup-each-lambda-env
+      - publish-each-lambda
+
+  publish-prod-auth-lambdas:
+    executor: vpn/aws
+    steps:
+      - install-terraform-and-npm
+      - set-prod-circle-branch
+      - set-aws-account-specific-resources
+      - checkout
+      - populate-okta-cli
+      - switch-okta-cli-to-prod
+      - fetch-prod-auth-lambda-vars-from-s3
       - populate-env-vars-into-job
       - setup-each-lambda-env
       - publish-each-lambda
