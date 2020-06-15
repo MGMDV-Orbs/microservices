@@ -39,7 +39,7 @@ commands:
           paths:
             - environment
 
-  fetch-prod-auth-lambda-vars-from-s3:
+  fetch-prod-lambda-vars-from-s3:
     description: Fetches environment variables for ${service-name}/prod.json
     steps:
       - run:
@@ -613,6 +613,7 @@ jobs:
       - checkout
       - populate-okta-cli
       - switch-okta-cli-to-prod
+      - fetch-prod-lambda-vars-from-s3
       - populate-env-vars-into-job
       - setup-each-lambda-env
       - publish-each-lambda
@@ -626,7 +627,7 @@ jobs:
       - checkout
       - populate-okta-cli
       - switch-okta-cli-to-prod
-      - fetch-prod-auth-lambda-vars-from-s3
+      - fetch-prod-lambda-vars-from-s3
       - populate-env-vars-into-job
       - setup-each-lambda-env
       - publish-each-lambda
