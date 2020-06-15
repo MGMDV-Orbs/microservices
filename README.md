@@ -11,7 +11,7 @@ https://circleci.com/orbs/registry/orb/mgmorbs/microservices
 This is an example of a drop-in CircleCI configuration that can be placed at `.circleci/config.yml` for any microservice for (almost) out-of-the-box builds.
 
 This Orb depends on each service to implement `build tag export-image push-image-to-ecr ci-test-unit ci-test-integration ci-lint deploy` make targets.
-
+ 
 ```yml
 version: 2.1
 
