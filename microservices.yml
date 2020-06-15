@@ -614,6 +614,7 @@ jobs:
       - populate-okta-cli
       - switch-okta-cli-to-prod
       - fetch-prod-lambda-vars-from-s3
+      - fetch-secret-ssm-values
       - populate-env-vars-into-job
       - setup-each-lambda-env
       - publish-each-lambda
